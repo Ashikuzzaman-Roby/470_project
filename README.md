@@ -1,16 +1,14 @@
 ```text 
 Mess_management/
-├── backend/            
-│   ├── config/db.js
-│   ├── controllers/userController.js
-│   ├── models/userModel.js
-│   ├── routes/userRoutes.js
-│   ├── utils/
-│   └── index.js        
-├── frontend/           
-│   ├── index.html
-│   ├── style.css
-│   └── script.js
-├── .env                
-├── .gitignore          
-└── package.json
+├── backend
+│   ├── config
+│   ├── controller
+│   ├── Models
+│   ├── routes
+│   └── server.js
+├── frontend
+│   ├── admin.html
+│   ├── login.html
+│   └── user_interface.html
+├── package.sh
+└── README.md
