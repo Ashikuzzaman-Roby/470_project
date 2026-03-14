@@ -1,3 +1,200 @@
+const express = require('express');
+const mysql = require('mysql2/promise'); // পরিবর্তন: promise wrapper ব্যবহার করা হয়েছে
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const path = require('path');
+const app = express();
+const multer = require('multer');
+//================================  multer configuration for img management : =================================
+
+
+
+// const path = require('path');
+const fs = require('fs');
+
+// ফোল্ডার পাথটি ঠিক করো
+const uploadDir = path.join(__dirname, 'public', 'uploads', 'posts');
+
+// যদি ফোল্ডার না থাকে তবে তৈরি করার লজিক (নিরাপত্তার জন্য)
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadDir); // এখানে ভেরিয়েবলটি ব্যবহার করো
+    },
+    filename: (req, file, cb) => {
+        cb(null, 'post-' + Date.now() + path.extname(file.originalname));
+    }
+});
+
+
+
+
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 100 * 1024 * 1024 }, // সহজভাবে 100 এমবি সেট করা হলো
+}).single('post_image');
+
+
+
+
+
+
+//========================================== middlewire configuration : ===============================
+
+
+app.use(cors({
+    origin: "*", 
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
+
+// this middle wire will show your public folder where your images are stored it whill tell the server to show the public folder.
+app.use('/public', express.static(path.join(__dirname, 'public')));
+
+
+
+
+// this line will show you .html files to the server.
+app.use(express.static(__dirname));
+
+
+
+
+
+// Database Connection
+let db;
+
+async function connectDB() {
+    try {
+        db = await mysql.createPool({ // createConnection এর বদলে createPool বেশি নিরাপদ
+            host: 'localhost',
+            user: 'root',
+            password: '',
+            database: 'auth_db',
+            waitForConnections: true,
+            connectionLimit: 10,
+            queueLimit: 0
+        });
+        console.log("Connected to MySQL Database!");
+    } catch (err) {
+        console.log("Database connection failed: " + err.message);
+    }
+}
+connectDB();
+
+// --- File Routes ---
+
+app.get('/', (req, res) => {
+    const filePath = path.join(__dirname, './home.html');
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            console.log("Error sending file:", err);
+            res.status(500).send("সার্ভার ফাইলটি খুঁজে পাচ্ছে না! নিশ্চিত করো তোমার login.html ফাইলটি server.js এর পাশেই আছে।");
+        }
+    });
+});
+
+// Admin ও User পেজের জন্য আলাদা রাউট
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+app.get('/user', (req, res) => {
+    res.sendFile(path.join(__dirname, 'user.html'));
+});
+
+// --- API Routes (তোমার আগের কোড) ---
+app.post('/register', async (req, res) => {
+    const { username, password, role } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const sql = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
+    try {
+        await db.query(sql, [username, hashedPassword, role]);
+        res.status(201).json({ message: "User Registered Successfully!" });
+    } catch (err) {
+        return res.status(500).json({ error: "User already exists!" });
+    }
+});
+
+
+
+// login post api route
+// server.js এর লগইন রাউটটি এইভাবে আপডেট করো
+app.post('/login', async (req, res) => { // async যোগ করা হয়েছে
+    
+    const { username, password } = req.body;
+    
+    const sql = "SELECT * FROM users WHERE username = ?";
+
+    try {
+        const [results] = await db.query(sql, [username]);
+        if (results.length === 0) return res.status(404).json({ error: "User not found!" });
+
+        const user = results[0];
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) return res.status(401).json({ error: "Wrong Password!" });
+
+        const token = jwt.sign({ id: user.id, role: user.role }, "SECRET_KEY", { expiresIn: '1h' });
+      
+        
+        // এখানে mess_id রেসপন্সে যোগ করা হয়েছে
+        res.json({ 
+            message: "Login Successful", 
+            token, 
+            id: user.id, 
+            role: user.role,
+            mess_id: user.mess_id,
+            profile_pic:user.profile_pic,
+            username:user.username
+        });
+        
+
+
+
+    } catch (err) {
+     
+        res.status(500).json({ error: "Database error" });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ============================================================     user interface ============================================
 
 
