@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-User Auth System</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; }
+        .container { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); padding: 30px; border-radius: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); width: 350px; color: white; text-align: center; }
+        input, select { width: 95%; padding: 12px; margin: 10px 0; border: none; border-radius: 5px; background: rgba(255, 255, 255, 0.2); color: white; outline: none; box-sizing: border-box; }
+        input::placeholder { color: #ddd; }
+        select option { color: black; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 5px; background: #4facfe; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        button:hover { background: #00f2fe; }
+        .toggle-link { margin-top: 15px; font-size: 0.9em; cursor: pointer; color: #ff9a9e; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 id="title">Login</h2>
+    <form id="auth-form">
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+        
+        <select name="role" id="role-select" style="display:none;">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+        </select>
+
+        <button type="submit" id="btn-text">Sign In</button>
+    </form>
+    <div class="toggle-link" onclick="toggleForm()" id="toggle-msg">Don't have an account? Register</div>
+</div>
+
+<script>
+    let isLogin = true;
+    const api_base = "http://localhost:8000";
+
+    function toggleForm() {
+        isLogin = !isLogin;
+        document.getElementById('title').innerText = isLogin ? 'Login' : 'Register';
+        document.getElementById('btn-text').innerText = isLogin ? 'Sign In' : 'Sign Up';
+        document.getElementById('toggle-msg').innerText = isLogin ? "Don't have an account? Register" : "Already have an account? Login";
+        document.getElementById('role-select').style.display = isLogin ? 'none' : 'block';
+    }
+
+    document.getElementById("auth-form").onsubmit = async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        const endpoint = isLogin ? "/login" : "/register";
+
+        try {
+            const response = await fetch(`${api_base}${endpoint}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                if (isLogin) {
+                    // লগইন সফল হলে টোকেন ও রোল সেভ করা
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('role', result.role);
+                    localStorage.setItem("userId",result.id);
+                    localStorage.setItem('messId', result.mess_id);
+
+                    localStorage.setItem('username', result.username); 
+                    localStorage.setItem('profile_pic', result.profile_pic);
+
+                    
+                    alert(`Welcome ${data.username}! Role: ${result.role}`);
+                    
+                    // রোল অনুযায়ী রিডাইরেক্ট
+                    if (result.role === "admin") {
+                        window.location.href = "admin.html";
+                    } else {
+                        window.location.href = "user.html";
+                    }
+                } else {
+                    // রেজিস্ট্রেশন সফল হলে
+                    alert("Registration Successful! Now please login.");
+                    toggleForm();
+                }
+            } else {
+                alert(result.error || "Action failed!");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Internal Server Error. Make sure your server is running!");
+        }
+    };
+</script>
+</body>
+</html>

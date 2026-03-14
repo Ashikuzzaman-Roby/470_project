@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bazar Management - Jellyfish UI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #0f0c29;         
+            --sidebar-bg: #161625;      
+            --card-bg: #1e1e3f;         
+            --accent-cyan: #00d1ff;     
+            --accent-pink: #ff79c6;     
+            --accent-yellow: #f1fa8c;   
+            --text-main: #e6e6ef;       
+            --text-dim: #a0a0c0;        
+            --border-color: #3d3d6e;    
+            --active-bg: rgba(0, 209, 255, 0.1);
+            --header-gradient: linear-gradient(90deg, #ff79c6 0%, #bd93f9 50%, #00d1ff 100%);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            border-right: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .profile-section { text-align: center; padding: 20px 0; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+        .profile-img {
+            width: 60px; height: 60px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink));
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 10px; font-weight: 600; font-size: 1.2rem; color: var(--bg-dark);
+        }
+
+        .nav-links { display: flex; flex-direction: column; gap: 10px; flex-grow: 1; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 15px;
+            border-radius: 10px; color: var(--text-dim); text-decoration: none;
+            transition: 0.3s; cursor: pointer;
+        }
+        .nav-item:hover, .nav-item.active { background: var(--active-bg); color: var(--accent-cyan); }
+        .nav-item a { text-decoration: none; color: inherit; font-size: 16px; }
+
+        .logout-btn {
+            border: 1px solid var(--accent-pink); color: var(--accent-pink);
+            background: transparent; padding: 12px; border-radius: 10px; cursor: pointer;
+            font-weight: 600; margin-top: auto;
+        }
+        .logout-btn:hover { background: var(--accent-pink); color: white; }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            background: radial-gradient(circle at top right, rgba(255, 121, 198, 0.05), transparent);
+        }
+
+        .header-banner {
+            background: var(--header-gradient);
+            margin: 20px 40px 0 40px;
+            padding: 30px;
+            border-radius: 20px;
+            color: #000;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .header-banner h2 { margin: 0; font-size: 1.8rem; font-weight: 600; }
+        .header-banner p { margin: 5px 0 0 0; opacity: 0.8; font-size: 0.9rem; }
+
+        .content-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px 40px;
+            align-items: start;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        h1 { font-size: 1.5rem; color: var(--accent-cyan); margin-top: 0; margin-bottom: 25px; }
+
+        button {
+            cursor: pointer; border: none; padding: 12px 20px; border-radius: 8px;
+            font-weight: 600; transition: 0.3s; font-family: 'Poppins';
+        }
+
+        .btn-primary { background: var(--accent-cyan); color: var(--bg-dark); width: 100%; margin-bottom: 12px; }
+        .btn-outline { background: transparent; border: 1px solid var(--accent-pink); color: var(--accent-pink); width: 100%; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        .summary-options { display: none; margin-top: 15px; gap: 10px; }
+        .btn-small { padding: 10px; font-size: 0.85rem; flex: 1; }
+
+        input {
+            background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-color);
+            color: white; padding: 12px; border-radius: 8px; width: 100%; margin-bottom: 12px;
+        }
+        input:focus { border-color: var(--accent-cyan); outline: none; }
+
+        .input-group { display: flex; gap: 8px; }
+
+        .meal-status-container { display: flex; gap: 10px; margin-bottom: 15px; }
+        .meal-type-card { flex: 1; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 12px; text-align: center; border: 1px solid var(--border-color); }
+        .toggle-group { display: flex; background: #000; border-radius: 6px; margin-top: 8px; overflow: hidden; }
+        .toggle-group input { display: none; }
+        .toggle-group label { flex: 1; padding: 6px; cursor: pointer; font-size: 0.75rem; color: var(--text-dim); }
+        .toggle-group input:checked + label { background: var(--accent-cyan); color: var(--bg-dark); font-weight: 600; }
+        .guest-section { background: rgba(255, 121, 198, 0.05); padding: 15px; border-radius: 12px; border: 1px dashed var(--accent-pink); }
+
+        .popup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 10, 20, 0.9); display: none;
+            justify-content: center; align-items: center; backdrop-filter: blur(8px);
+            z-index: 2000;
+        }
+
+        .popup-content {
+            background: var(--card-bg); padding: 30px; border-radius: 20px;
+            width: 90%; max-width: 550px; border: 1px solid var(--accent-cyan);
+            max-height: 85vh; overflow-y: auto;
+        }
+
+        .post-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-cyan) !important;
+            box-shadow: 0 8px 25px rgba(0, 209, 255, 0.2) !important;
+        }
+
+        .view-btn:hover {
+            background: var(--accent-cyan) !important;
+            color: var(--bg-dark) !important;
+        }
+
+
+
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid var(--border-color); padding: 12px; text-align: left; }
+        th { color: var(--accent-cyan); background: rgba(0, 209, 255, 0.05); }
+
+        #bazarInputSection { display: none; }
+
+
+
+        /* newsfeed designing :  */
+        /* নিউজফিড গ্রিড */
+        #newsfeed {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* কার্ডের মেইন ডিজাইন */
+        .post-card {
+            background: rgba(255, 255, 255, 0.03); /* একদম হালকা ব্যাকগ্রাউন্ড */
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* স্মুথ এনিমেশন */
+            cursor: pointer;
+        }
+
+        /* মাউস হোভার করলে লাইট এফেক্ট */
+        .post-card:hover {
+            transform: translateY(-10px); /* কার্ড একটু উপরে উঠবে */
+            background: rgba(255, 255, 255, 0.07);
+            border-color: var(--accent-cyan);
+            /* এখান থেকেই লাইটটা জ্বলবে */
+            box-shadow: 0 0 25px rgba(0, 209, 255, 0.3), 
+                        inset 0 0 15px rgba(0, 209, 255, 0.1);
+        }
+
+        /* ইমেজের জন্য স্টাইল */
+        .post-img-container {
+            width: 100%;
+            height: 180px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .post-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .post-card:hover .post-img-container img {
+            transform: scale(1.1); /* হোভার করলে ছবি একটু জুম হবে */
+        }
+
+        /* টাইটেল এবং টেক্সট */
+        .post-title {
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 10px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .post-desc {
+            color: #b0b0d0;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        /* প্রাইস ট্যাগ */
+        .price-badge {
+            background: linear-gradient(45deg, var(--accent-cyan), #0081ff);
+            color: #000;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+
+
+        /* for responsiveness */
+        /* --- RESPONSIVE DESIGN ADDED BY GEMINI --- */
+
+        /* মোবাইল স্ক্রিনের জন্য মেইন অ্যাডজাস্টমেন্ট */
+        @media (max-width: 992px) {
+            body {
+                flex-direction: column; /* সাইডবার উপরে চলে যাবে */
+                overflow-y: auto;
+                height: auto;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: 10px 20px;
+                position: sticky;
+                top: 0;
+                z-index: 1000;
+                background-color: var(--sidebar-bg);
+            }
+
+            .profile-section {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                padding: 5px 0;
+                margin-bottom: 5px;
+                border-bottom: none;
+            }
+
+            .profile-img { margin: 0; width: 40px; height: 40px; font-size: 0.9rem; }
+
+            .nav-links {
+                flex-direction: row; /* মেনুগুলো পাশাপাশি আসবে */
+                overflow-x: auto; /* জায়গা না থাকলে স্ক্রল হবে */
+                padding-bottom: 5px;
+            }
+
+            .nav-item {
+                padding: 8px 12px;
+                white-space: nowrap; /* টেক্সট ভেঙে যাবে না */
+                font-size: 14px;
+            }
+
+            .logout-btn {
+                position: absolute;
+                right: 20px;
+                top: 15px;
+                padding: 8px 12px;
+                font-size: 12px;
+                margin-top: 0;
+            }
+
+            .header-banner { margin: 15px 15px 0 15px; padding: 20px; }
+            .header-banner h2 { font-size: 1.4rem; }
+
+            /* গ্রিড লেআউট ১ কলামে নিয়ে আসা */
+            .content-layout {
+                grid-template-columns: 1fr;
+                padding: 20px 15px;
+                gap: 20px;
+            }
+
+            #newsfeed-section { padding: 0 15px; }
+        }
+
+        /* ছোট মোবাইলের জন্য ইনপুট সিস্টেম ঠিক করা */
+        @media (max-width: 480px) {
+            .input-group {
+                flex-direction: column; /* ইনপুট বক্সগুলো নিচে নিচে আসবে */
+            }
+
+            .meal-status-container {
+                flex-direction: column;
+            }
+
+            .popup-content {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .post-card {
+                margin-bottom: 10px;
+            }
+
+            .nav-item a { font-size: 13px; }
+        }
+
+        /* কাস্টম স্ক্রলবার (মোবাইল মেনুর জন্য) */
+        .nav-links::-webkit-scrollbar {
+            height: 3px;
+        }
+        .nav-links::-webkit-scrollbar-thumb {
+            background: var(--accent-cyan);
+            border-radius: 10px;
+        }
+
+
+        /* for toggle button and respective work :  */
+    
+
+
+        /* ১. এই অংশটুকু মিডিয়া কোয়েরির বাইরে থাকবে */
+        .menu-toggle, .close-menu {
+            display: none; 
+        }
+
+        /* ২. মোবাইল রেসপন্সিভ পার্ট (৯৯২ পিক্সেলের নিচে) */
+        @media (max-width: 992px) {
+            .menu-toggle {
+                display: block;
+                position: absolute; /* fixed এর বদলে absolute দিন */
+                top: 20px;
+                left: 15px;
+                z-index: 1100;
+                background: var(--accent-cyan);
+                color: var(--bg-dark);
+                border: none;
+                padding: 10px 15px;
+                border-radius: 8px;
+                font-size: 1.2rem;
+                cursor: pointer;
+                box-shadow: 0 4px 15px rgba(0, 209, 255, 0.3);
+            }
+
+            .logout-btn {
+                position: relative; 
+                right: auto;
+                top: auto;
+                width: 100%; 
+                margin-top: 20px; 
+                padding: 12px;
+                font-size: 14px;
+                display: block;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: -260px;
+                top: 0;
+                height: 100vh;
+                z-index: 2000;
+                transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                width: 260px;
+                display: flex; /* মোবাইল ভিউতে ফ্লেক্স অন করলাম */
+                flex-direction: column;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .close-menu {
+                display: block; /* মোবাইলে ক্রস বাটন দেখাবে */
+                align-self: flex-end;
+                background: transparent;
+                color: var(--accent-pink);
+                font-size: 1.5rem;
+                border: none;
+                margin-bottom: 10px;
+                cursor: pointer;
+            }
+
+            .nav-links {
+                flex-direction: column !important;
+                overflow-x: hidden;
+            }
+
+            .nav-item {
+                width: 100%;
+                padding: 15px;
+            }
+
+            body.menu-open {
+                overflow: hidden;
+            }
+
+            .main-container {
+                width: 100%;
+            }
+
+            .header-banner {
+                margin: 15px 15px 0 15px;
+                padding: 20px 20px 20px 60px; /* এখানে শেষ ভ্যালু ৬০ পিক্সেল বাম দিক থেকে জায়গা সরাবে */
+            }
+
+            .header-banner h2 {
+                font-size: 1.3rem;
+                margin-top: 5px; /* টেক্সটকে একটু নিচে নামানোর জন্য */
+            }
+
+            .profile-img-container {
+                width: 70px; /* মোবাইলে একটু ছোট করলে সুন্দর লাগতে পারে */
+                height: 70px;
+            }
+
+
+            /* for image text and upload button  */
+            .profile-section {
+                display: flex;
+                flex-direction: column; /* এলিমেন্টগুলো নিচে নিচে আসবে */
+                align-items: center;    /* সব মাঝখানে থাকবে */
+                text-align: center;
+                gap: 10px;             /* প্রতিটা জিনিসের মাঝে গ্যাপ থাকবে */
+                padding: 20px 10px;
+            }
+
+            .profile-img-container {
+                width: 80px;  /* মোবাইলে একটু ছোট সাইজ */
+                height: 80px;
+                margin: 0 auto; /* একদম মাঝখানে রাখার জন্য */
+            }
+
+            .username-text {
+                margin: 5px 0;
+                font-size: 1.2rem;
+            }
+
+            .update-pic-btn {
+                width: fit-content; /* বাটন যেন খুব বেশি চওড়া না হয় */
+                padding: 8px 15px;
+            }
+
+
+
+
+
+        } 
+
+
+
+
+
+
+        /* for profile picture upload :  */
+
+        .profile-section {
+            padding: 25px 15px;
+            border-bottom: 1px solid rgba(0, 209, 255, 0.1);
+            margin-bottom: 15px;
+        }
+
+        .profile-img-container {
+            position: relative;
+            width: 85px;
+            height: 85px;
+            margin: 0 auto 10px;
+        }
+
+        .profile-img-preview {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-cyan);
+            background: var(--bg-dark);
+        }
+
+        .username-text {
+            font-size: 1.1rem;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+
+        .update-pic-btn {
+            background: rgba(0, 209, 255, 0.1);
+            color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .update-pic-btn:hover {
+            background: var(--accent-cyan);
+            color: var(--bg-dark);
+            box-shadow: 0 0 10px rgba(0, 209, 255, 0.4);
+        }
+
+
+        /* for profile picture :  */
+        /* মেইন সিএসএস - সব ডিভাইসে ছবি সুন্দর দেখাবে */
+        .profile-img-preview {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover; /* এটিই আসল ম্যাজিক */
+            object-position: center;
+            border: 2px solid var(--accent-cyan);
+            background: var(--bg-dark);
+            display: block; /* বাড়তি স্পেস সরাতে */
+        }
+
+        .profile-img-container {
+            position: relative;
+            width: 85px; /* ডেক্সটপে সাইজ */
+            height: 85px;
+            margin: 0 auto 10px;
+            flex-shrink: 0; /* যেন কোনো চাপে ছবি ছোট না হয়ে যায় */
+        }
+
+
+
+
+
+
+
+    </style>
+</head>
+<body>
+    <!-- for mobile segment -->
+    <button class="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+
+
+    <!-- header part :  -->
+
+    <nav class="sidebar" id="sidebar">
+        <!-- for mobile segment -->
+        <button class="close-menu" onclick="toggleMobileMenu()">✕</button>
+        <!-- mobile segment ends here  -->
+
+
+
+
+       <!-- profile picture : upload the picture. -->
+
+        <div class="profile-section">
+            <div class="profile-img-container">
+                <img id="user-avatar" src="default-avatar.png" alt="Profile" class="profile-img-preview">
+                <div class="upload-overlay" onclick="document.getElementById('pic-input').click()">
+                    <i class="fas fa-camera"></i>
+                </div>
+            </div>
+            
+            <div id="displayUsername" class="username-text">Member</div>
+            
+            <input type="file" id="pic-input" hidden accept="image/*" onchange="uploadProfilePic(this)">
+            
+            <button class="update-pic-btn" onclick="document.getElementById('pic-input').click()">
+                <i class="fas fa-sync-alt"></i> Update Photo
+            </button>
+        </div>
+
+
+
+
+
+        <div class="nav-links">
+            <div class="nav-item">🏠 <a href="./home.html">Home</a></div>
+            <div class="nav-item active">📊 <span>Dashboard</span></div>
+
+
+			<!-- here there will be a div and will have one button . that was create-post. -->
+			 <div class="nav-item">🚀 <a href="./create_post.html">Create new post</a></div>
+
+
+
+
+
+            <div class="nav-item"   onclick="toggleSummaryOptions()" >📅 <a href="./user_history.html">History</a></div>
+        </div>
+		
+
+
+
+
+
+
+
+        <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+    </nav>
+
+    <div class="main-container">
+        <div class="header-banner">
+            <h2 id="welcomeText">Hello, Member!</h2>
+            <p>Mess Management Dashboard • Core System v1.0</p>
+        </div>
+
+        <section id="bazarInputSection">
+            <div class="content-layout">
+                <div class="card">
+                    <h1>🍱 Meal Management</h1>
+                    <label style="font-size: 0.8rem; color: var(--accent-cyan);">Select Date</label>
+                    <input type="date" id="mealDate">
+
+                    <div class="meal-status-container">
+                        <div class="meal-type-card">
+                            <span style="font-size: 0.85rem;">☀️ Lunch</span>
+                            <div class="toggle-group">
+                                <input type="radio" name="lunch" id="l_on" value="1" checked>
+                                <label for="l_on">ON</label>
+                                <input type="radio" name="lunch" id="l_off" value="0">
+                                <label for="l_off">OFF</label>
+                            </div>
+                        </div>
+                        <div class="meal-type-card">
+                            <span style="font-size: 0.85rem;">🌙 Dinner</span>
+                            <div class="toggle-group">
+                                <input type="radio" name="dinner" id="d_on" value="1" checked>
+                                <label for="d_on">ON</label>
+                                <input type="radio" name="dinner" id="d_off" value="0">
+                                <label for="d_off">OFF</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="guest-section">
+                        <label style="font-size: 0.85rem; margin-bottom: 8px; display: block;">Any Guest Meals?</label>
+                        <div class="input-group">
+                            <input type="number" id="guestCount" placeholder="0" min="0" style="margin-bottom: 0;">
+                            <button class="btn-primary" style="width: 120px; background: var(--accent-pink); color: white; margin-bottom: 0;" onclick="reviewMeal()">Review</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button class="btn-outline btn-small">Your History</button>
+                        <button class="btn-outline btn-small">Mess Total</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h1>🛒 Bazar Input System</h1>
+                    <button class="btn-primary" onclick="toggleBazarInput()">➕ Input Bazar</button> 
+                    <button class="btn-outline" onclick="toggleSummaryOptions()">📊 Monthly Summary</button>
+                    
+                    <div id="summaryOptions" class="summary-options">
+                        <button class="btn-outline btn-small" onclick="fetchSummary('your')">Your Bazar</button>
+                        <button class="btn-outline btn-small" onclick="fetchSummary('total')">Total Bazar</button>
+                    </div>
+
+                    <div id="bazarInputArea" style="display:none; margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                        <label style="font-size: 0.8rem; color: var(--accent-cyan);">Select Date</label>
+                        <input type="date" id="bazarDate">
+                        
+                        <div id="itemList">
+                            <div class="input-group">
+                                <input type="text" placeholder="Item Name" class="item-name">
+                                <input type="number" placeholder="Price" class="item-price" oninput="calculateTotal()">
+                            </div>
+                        </div>
+                        
+                        <button class="btn-outline" style="font-size: 0.8rem; margin-bottom: 20px;" onclick="addNewRow()">+ Add Another Item</button>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <span style="color: var(--text-dim);">Grand Total:</span>
+                            <h2 style="margin: 0; color: var(--accent-yellow);"><span id="grandTotal">0</span> TK</h2>
+                        </div>
+
+                        <button class="btn-primary" style="background: var(--accent-pink); color: white;" onclick="previewBazar()">Review & Submit</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- here will be newsfeed part.  -->
+        <section class="newsfeedpart">
+            <div id="newsfeed-section" style="padding: 0 40px;">
+                <h1 style="margin-top: 20px; text-align: center;">📢 your Newsfeed</h1>
+                <div id="newsfeed">
+                    <p style="color: var(--text-dim);text-align: center;">Loading feed...</p>
+                </div>
+            </div>
+        </section>
+
+
+
+
+    </div>
+
+    <div id="universalPopup" class="popup-overlay">
+        <div class="popup-content">
+            <h2 id="popupTitle" style="color: var(--accent-cyan); margin-top: 0;">Title</h2>
+            <div id="popupBody"></div>
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button class="btn-outline" onclick="closePopup()">Cancel</button>
+                <button id="confirmBtn" class="btn-primary" style="margin-bottom: 0;">Confirm & Save</button>
+            </div>
+        </div>
+    </div>
+
+    
+
+
+
+
+    <script>
+
+        // for mobile responsiveness : 
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+            document.body.classList.toggle('menu-open');
+        }
+
+        // মেনু আইটেমে ক্লিক করলে মোবাইল ভিউতে মেনু অটো বন্ধ হয়ে যাবে
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth <= 992) {
+                    toggleMobileMenu();
+                }
+            });
+        });
+
+
+
+
+
+
+        // main part starts from here : 
+
+
+        // profile picture adding to the database : 
+        async function uploadProfilePic(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                
+                // ১. সাইডবারে সাথে সাথে প্রিভিউ দেখানোর জন্য
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('user-avatar').src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+
+                // ২. সার্ভারে পাঠানোর জন্য FormData
+                const formData = new FormData();
+                formData.append('profile_pic', file);
+                formData.append('userId', localStorage.getItem('userId'));
+
+                try {
+                    const response = await fetch('/api/upload-profile-pic', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await response.json();
+
+              
+                           
+                    if (data.success) {
+                        localStorage.setItem('userPic', data.imagePath);
+                        // ২. এখানে ইমেজ সোর্স আপডেট করবো
+                        document.getElementById('user-avatar').src = data.imagePath;
+                        alert('প্রোফাইল পিকচার সফলভাবে আপডেট হয়েছে! 😊');
+
+                    } else {
+                        alert('আপলোড ব্যর্থ হয়েছে: ' + data.message);
+                    }
+
+
+
+
+                } catch (err) {
+                    console.error('Error:', err);
+                    alert('সার্ভারে সমস্যা হচ্ছে, পরে চেষ্টা করো বন্ধু।');
+                }
+            }
+        }
+
+
+
+        // পেজ লোড হওয়ার সাথে সাথে এটি চলবে
+        // profile pci fetching from the database;
+        
+        async function loadUserData() {
+            const userId = localStorage.getItem('userId');
+            if (!userId) return;
+
+            try {
+                const response = await fetch(`/api/user/${userId}`);
+                const user = await response.json();
+
+                if (user && user.profile_pic) {
+                    const avatarImg = document.getElementById('user-avatar');
+                    // যদি লোকাল স্টোরেজের ছবির সাথে ডাটাবেসের ছবি না মিলে, তবে আপডেট করো
+                    if (avatarImg.src !== user.profile_pic) {
+                        avatarImg.src = user.profile_pic;
+                        localStorage.setItem('userPic', user.profile_pic);
+                    }
+                }
+            } catch (err) {
+                console.error("Sync error:", err);
+            }
+        }
+
+        
+        const api_base = "http://localhost:8000";
+        // ১. পেজ লোড লজিক
+        async function initializePage() {
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const user = localStorage.getItem('username') || 'Member';
+            document.getElementById('displayUsername').innerText = user;
+            document.getElementById('welcomeText').innerText = `Hello, ${user}!`;
+
+            try {
+                const response = await fetch(`http://localhost:8000/find_mess_member?userId=${userId}`);
+                const data = await response.json();
+                const mainBazarSection = document.getElementById("bazarInputSection");
+                
+                if (data.mess_id) {
+                    mainBazarSection.style.display = "block";
+                } else {
+                    mainBazarSection.style.display = "none";
+                }
+            } catch (error) {
+                console.error("Membership check failed:", error);
+            }
+            
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('mealDate').value = today;
+            document.getElementById('bazarDate').value = today;
+
+
+            // for loading newsfeed : 
+            loadPosts();
+
+
+
+
+        }
+
+        
+
+        // ২. বাজাৰ প্রিভিউ
+        function previewBazar() {
+            const names = document.getElementsByClassName('item-name');
+            const prices = document.getElementsByClassName('item-price');
+            const date = document.getElementById('bazarDate').value;
+            
+            if (!date) return alert("Please select a date first!");
+
+            let rows = "";
+            let total = 0;
+            for (let i = 0; i < names.length; i++) {
+                if (names[i].value || prices[i].value) {
+                    rows += `<tr><td>${names[i].value || 'Unknown'}</td><td>${prices[i].value || 0} TK</td></tr>`;
+                    total += parseFloat(prices[i].value) || 0;
+                }
+            }
+
+            document.getElementById('popupTitle').innerText = "Review Your Entry";
+            document.getElementById('popupBody').innerHTML = `
+                <p style="color: var(--accent-yellow);">Date: ${date}</p>
+                <table>
+                    <thead><tr><th>Item</th><th>Price</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                <h3 style="text-align:right; color:var(--accent-cyan);">Total: ${total} TK</h3>
+            `;
+            
+            const confirmBtn = document.getElementById('confirmBtn');
+            confirmBtn.style.display = 'block'; 
+            confirmBtn.onclick = submitToDatabase;
+            document.getElementById('universalPopup').style.display = 'flex';
+        }
+
+        // ৩. সামারি ফেচ
+        async function fetchSummary(type) {
+            const userId = localStorage.getItem('userId');
+            let url = (type === 'your') ? `http://localhost:8000/my-bazar/${userId}` : `http://localhost:8000/total-bazar`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                let rows = "";
+                let grandTotal = 0;
+
+                data.forEach(row => {
+                    let price = parseFloat(row.total_price) || 0; 
+                    rows += `<tr>
+                                <td>${row.bazar_date}</td>
+                                ${type === 'total' ? `<td>${row.username}</td>` : ''}
+                                <td>${row.items.join(', ')}</td>
+                                <td>${price.toFixed(2)} TK</td>
+                            </tr>`;
+                    grandTotal += price;
+                });
+
+                document.getElementById('popupTitle').innerText = type === 'your' ? "📅 Your Bazar Summary" : "🌍 Mess Total Bazar";
+                document.getElementById('popupBody').innerHTML = `
+                    <table>
+                        <thead><tr><th>Date</th>${type === 'total' ? '<th>User</th>' : ''}<th>Items</th><th>Price</th></tr></thead>
+                        <tbody>${rows || '<tr><td colspan="4">No data found</td></tr>'}</tbody>
+                    </table>
+                    <h3 style="text-align:right; color:var(--accent-yellow);">Total: ${grandTotal.toFixed(2)} TK</h3>
+                `;
+                
+                document.getElementById('confirmBtn').style.display = 'none';
+                document.getElementById('universalPopup').style.display = 'flex';
+            } catch (e) {
+                alert("Failed to load summary.");
+            }
+        }
+
+        // ৪. মিল রিভিউ
+        function reviewMeal() {
+            const date = document.getElementById('mealDate').value;
+            if (!date) return alert("Please select a date first!");
+
+            const l = document.querySelector('input[name="lunch"]:checked').value;
+            const d = document.querySelector('input[name="dinner"]:checked').value;
+            const g = document.getElementById('guestCount').value || 0;
+
+            document.getElementById('popupTitle').innerText = "Confirm Today's Meal";
+            document.getElementById('popupBody').innerHTML = `
+                <div style="text-align: left; padding: 10px;">
+                    <p>📅 Date: <b>${date}</b></p>
+                    <p>☀️ Lunch: <b>${l == 1 ? 'ON ✅' : 'OFF ❌'}</b></p>
+                    <p>🌙 Dinner: <b>${d == 1 ? 'ON ✅' : 'OFF ❌'}</b></p>
+                    <p>👤 Guest: <b>${g}</b></p>
+                </div>
+            `;
+
+            const confirmBtn = document.getElementById('confirmBtn');
+            confirmBtn.style.display = 'block'; 
+            confirmBtn.onclick = async () => {
+                const mealData = {
+                    user_id: localStorage.getItem('userId'), 
+                    date: date,
+                    lunch: parseInt(l),
+                    dinner: parseInt(d),
+                    guest: parseInt(g)
+                };
+
+                try {
+                    const response = await fetch('http://localhost:8000/input_meal', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(mealData)
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        alert("Success! Meal record saved. 🎉");
+                        location.reload();
+                    } else {
+                        alert(result.message || "Something went wrong!");
+                        closePopup();
+                    }
+                } catch (error) {
+                    alert("Server error! Please check connection.");
+                }
+            };
+
+            document.getElementById('universalPopup').style.display = 'flex';
+        }
+
+        // ৫. সাহায্যকারী ফাংশনসমূহ
+
+       function logout() {
+            if (confirm("Are you sure?")) {
+                localStorage.clear(); // এটি সব মুছে দিবে (userId, username, userPic)
+                window.location.href = './login.html';
+            }
+        }
+
+
+
+
+
+
+
+        function toggleBazarInput() {
+            const x = document.getElementById("bazarInputArea");
+            x.style.display = (x.style.display === "none") ? "block" : "none";
+        }
+
+        function toggleSummaryOptions() {
+            const opt = document.getElementById("summaryOptions");
+            opt.style.display = (opt.style.display === "none" || opt.style.display === "") ? "flex" : "none";
+        }
+
+        function addNewRow() {
+            const div = document.createElement('div');
+            div.className = 'input-group';
+            div.innerHTML = `<input type="text" placeholder="Item" class="item-name">
+                             <input type="number" placeholder="Price" class="item-price" oninput="calculateTotal()">`;
+            document.getElementById('itemList').appendChild(div);
+        }
+
+        function calculateTotal() {
+            let total = 0;
+            const prices = document.getElementsByClassName('item-price');
+            for (let p of prices) { total += parseFloat(p.value) || 0; }
+            document.getElementById('grandTotal').innerText = total;
+        }
+
+        function closePopup() { document.getElementById('universalPopup').style.display = 'none'; }
+
+
+
+
+        // adding bazar in the database.
+
+        async function submitToDatabase() {
+            const date = document.getElementById('bazarDate').value;
+            const total = document.getElementById('grandTotal').innerText;
+            const names = document.getElementsByClassName('item-name');
+            const prices = document.getElementsByClassName('item-price');
+            
+            
+            let itemArray = [];
+            for (let i = 0; i < names.length; i++) {
+                if (names[i].value) itemArray.push(`${names[i].value} (${prices[i].value}tk)`);
+            }
+
+            if(itemArray.length===0){
+                alert(`Please input bazar item`);
+                return ;
+
+            }
+
+            // data would be : user_id, mess_id, username, bazar_date, items, total_price
+
+            const data = {
+                user_id: localStorage.getItem('userId'),
+                messId : localStorage.getItem("messId"),
+                username :localStorage.getItem("username"),
+                bazar_date: date,
+                items: itemArray, 
+                total_price: parseFloat(total)
+            };
+
+            try {
+                const res = await fetch('http://localhost:8000/api/submit-bazar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (res.ok) {
+                    alert("Success! Bazar saved. 🎉");
+                    location.reload();
+                }
+            } catch (e) { alert("Server Error!"); }
+        }
+
+
+
+
+
+        async function loadPosts() {
+            try {
+                const response = await fetch(`${api_base}/get-posts`);
+                const posts = await response.json();
+                const container = document.getElementById('newsfeed');
+
+                if (!posts || posts.length === 0) {
+                    container.innerHTML = `<p style="color:white; grid-column:1/-1; text-align:center;">No posts yet!</p>`;
+                    return;
+                }
+
+                container.innerHTML = posts.map(post => {
+                    let finalPath = post.image_path;
+                    if (finalPath && !finalPath.startsWith('/public') && finalPath !== 'NULL') {
+                        finalPath = '/public' + finalPath;
+                    }
+
+                    const imageUrl = (finalPath && finalPath !== 'NULL')
+                        ? `${api_base}${finalPath}`
+                        : 'https://via.placeholder.com/400x250?text=Jellyfish+Mess';
+
+                    return `
+                        <div class="post-card" onclick="goToDetails(${post.id})">
+                            <div class="post-img-container">
+                                <img src="${imageUrl}" onerror="this.src='https://via.placeholder.com/400x250?text=No+Image'">
+                            </div>
+                            
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                <span style="color:var(--accent-cyan); font-size:11px; font-weight:bold; text-transform:uppercase;">
+                                    ${post.post_type}
+                                </span>
+                                <span class="price-badge">
+                                    ${post.post_type === 'other' ? 'GENERAL ✨' : post.price + ' TK'}
+                                </span>
+                            </div>
+
+                            <h3 class="post-title">${post.title}</h3>
+                            
+                            <p class="post-desc">
+                                ${post.description.substring(0, 60)}...
+                            </p>
+
+                            <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; display:flex; align-items:center; gap:8px;">
+                                <div style="width:25px; height:25px; border-radius:50%; background:#333; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--accent-cyan); border:1px solid var(--accent-cyan);">
+                                    ${post.username ? post.username.charAt(0).toUpperCase() : 'U'}
+                                </div>
+                                <span style="font-size:12px; color:#888;">${post.username}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+
+
+
+
+
+
+
+
+        // তোমার নতুন পেজের নাম view_post.html অনুযায়ী আপডেট করা হয়েছে
+        function goToDetails(postId) {
+            window.location.href = `view_post.html?id=${postId}`;
+        }
+
+
+        // ১. পেজ লোড লজিক (সবগুলোকে একটি সুন্দর অর্ডারে নিয়ে এলাম)
+        document.addEventListener('DOMContentLoaded', async () => {
+            // প্রথমেই ছবি দেখানো (ফাস্ট ইউআই)
+            const savedPic = localStorage.getItem('userPic');
+            const avatarImg = document.getElementById('user-avatar');
+            if (savedPic && avatarImg) {
+                avatarImg.src = savedPic;
+            }
+
+            // ইউজার ভ্যালিডেশন এবং পেজ সেটআপ
+            await initializePage();
+
+            // সার্ভার থেকে লেটেস্ট ছবি ও প্রোফাইল আপডেট
+            try {
+                await loadUserData();
+            } catch (e) {
+                console.log("Profile sync failed, using cached data.");
+            }
+        });
+
+
+
+
+
+
+
+
+
+       
+
+
+
+
+    </script>
+</body>
+</html>

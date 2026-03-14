@@ -1,5 +1,5 @@
 ```text 
-my-big-project/
+Mess_management/
 ├── backend/            
 │   ├── config/db.js
 │   ├── controllers/userController.js
@@ -7,7 +7,7 @@ my-big-project/
 │   ├── routes/userRoutes.js
 │   ├── utils/
 │   └── index.js        
-├── frontend/           # এখানে সব HTML, CSS, JS থাকবে
+├── frontend/           
 │   ├── index.html
 │   ├── style.css
 │   └── script.js
