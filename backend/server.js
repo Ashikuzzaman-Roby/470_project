@@ -71,11 +71,33 @@ app.use(express.static(__dirname));
 
 
 // Database Connection
+// let db;
+
+// async function connectDB() {
+//     try {
+//         db = await mysql.createPool({ // createConnection এর বদলে createPool বেশি নিরাপদ
+//             host: 'localhost',
+//             user: 'root',
+//             password: '',
+//             database: 'auth_db',
+//             waitForConnections: true,
+//             connectionLimit: 10,
+//             queueLimit: 0
+//         });
+//         console.log("Connected to MySQL Database!");
+//     } catch (err) {
+//         console.log("Database connection failed: " + err.message);
+//     }
+// }
+// connectDB();
+
+
 let db;
 
 async function connectDB() {
     try {
-        db = await mysql.createPool({ // createConnection এর বদলে createPool বেশি নিরাপদ
+        // createPool এর আগে await দরকার নেই, কারণ এটি সরাসরি পুল তৈরি করে
+        db = mysql.createPool({
             host: 'localhost',
             user: 'root',
             password: '',
@@ -84,12 +106,22 @@ async function connectDB() {
             connectionLimit: 10,
             queueLimit: 0
         });
-        console.log("Connected to MySQL Database!");
+
+        // কানেকশনটি আসলে ঠিক আছে কি না তা পরীক্ষা করার জন্য একটি টেস্ট কুয়েরি
+        await db.getConnection(); 
+        console.log("✅ Connected to MySQL Database using Pool (Promise)!");
+        
     } catch (err) {
-        console.log("Database connection failed: " + err.message);
+        console.error("❌ Database connection failed: " + err.message);
     }
 }
+
 connectDB();
+
+
+
+
+
 
 // --- File Routes ---
 
@@ -1398,26 +1430,31 @@ app.get("/get-post/:id", async (req, res) => {
 
 // ====================== new features : 
 
+
 app.post("/post-notice", async (req, res) => { 
     console.log("1. Backend Received:", req.body);
-    const { notice_date, message } = req.body;
+    
+    const { notice_date, message, messId } = req.body;
+
+    // যদি messId না আসে, তবে এরর থ্রো করবো
+    if (!messId) {
+        return res.status(400).send("Mess ID is required to post a notice.");
+    }
 
     try {
-        const sql = 'INSERT INTO admin_notice (notice_date, message) VALUES (?, ?)';
+        // SQL কুয়েরিতে mess_id কলামটি যোগ করা হলো
+        const sql = 'INSERT INTO admin_notice (notice_date, message, mess_id) VALUES (?, ?, ?)';
         console.log("2. Attempting to run Query...");
-
         
-        const [result] = await db.query(sql, [notice_date, message]);
+        // ভ্যালুগুলো ডাটাবেসে পাঠানো হচ্ছে
+        const [result] = await db.query(sql, [notice_date, message, messId]);
 
-        // INSERT কুয়েরির ক্ষেত্রে result.affectedRows চেক করতে হয়
         if (result.affectedRows === 0) {
-            console.log(`❌ Message doesn't submit`);
+            console.log(`❌ Notice doesn't submit`);
             return res.status(400).send("Failed to post notice.");
         }
 
         console.log(`✅ Success: Notice inserted with ID: ${result.insertId}`);
-        
-        // ফ্রন্টএন্ডে সাকসেস রেসপন্স পাঠানো
         res.status(200).json({
             status: "Success",
             message: "Notice posted successfully!",
@@ -1432,21 +1469,20 @@ app.post("/post-notice", async (req, res) => {
 
 
 
-
-
-
-
-
-
 app.get("/get-today-notices", async (req, res) => {
-    try {
-        // SQL: শুধু আজকের তারিখের নোটিশগুলো আনো এবং নতুনটা আগে দেখাও (DESC)
-        const sql = 'SELECT message, created_at FROM admin_notice WHERE notice_date = CURDATE() ORDER BY created_at DESC';
-        
-        const [notices] = await db.query(sql);
+    // ফ্রন্টএন্ড থেকে পাঠানো messId রিসিভ করা
+    const messId = req.query.messId; 
 
-        // ফ্রন্টএন্ডে ডেটা পাঠিয়ে দিচ্ছি
+    if (!messId) {
+        return res.status(400).json({ error: "Mess ID is required to fetch notices." });
+    }
+
+    try {
+        // SQL: শুধু নির্দিষ্ট মেসের এবং আজকের তারিখের নোটিশগুলো আনবে
+        const sql = 'SELECT message, created_at FROM admin_notice WHERE mess_id = ? AND notice_date = CURDATE() ORDER BY created_at DESC';
         
+        // messId প্যারামিটার হিসেবে ডাটাবেসে পাঠানো হচ্ছে
+        const [notices] = await db.query(sql, [messId]);
         res.status(200).json(notices);
         
     } catch (error) {
@@ -1458,16 +1494,180 @@ app.get("/get-today-notices", async (req, res) => {
 
 
 
+app.get("/api/dashboard-analytics", async (req, res) => {
+    // URL থেকে messId নিচ্ছি (যেমন: /api/dashboard-analytics?messId=1)
+    const messId = req.query.messId;
+
+    if (!messId) {
+        return res.status(400).json({ error: "messId is required" });
+    }
+
+    try {
+        // ১. JOIN ব্যবহার করে নির্দিষ্ট মেসের মিলের ডাটা তুলে আনা
+        const sql = `
+            SELECT 
+                DATE(m.meal_date) as meal_date, 
+                SUM(m.lunch) as lunch_count, 
+                SUM(m.dinner) as dinner_count, 
+                SUM(m.guest) as guest_count 
+            FROM meals m
+            JOIN users u ON m.user_id = u.id
+            WHERE u.mess_id = ?
+            GROUP BY DATE(m.meal_date) 
+            ORDER BY m.meal_date ASC
+        `;
+        
+        // messId প্যারামিটার হিসেবে পাস করা হলো
+        const [rows] = await db.query(sql, [messId]);
+        
+        console.log("----------------------------");
+        console.log(`🔔 API Hit Received for Analytics (Mess ID: ${messId})`);
+        console.log("Total Rows Found:", rows.length);
+        console.log("----------------------------");
+
+        // ২. বর্তমান এবং আগের মাসের ডাটা আলাদা করার লজিক (আগের মতোই থাকবে)
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth(); 
+        const currentYear = currentDate.getFullYear();
+        
+        let currentMonthTotal = 0;
+        let prevMonthTotal = 0;
+        let distribution = { lunch: 0, dinner: 0, guest: 0 };
+        let dailyTrend = { labels: [], data: [] };
+
+        rows.forEach(row => {
+            const rowDate = new Date(row.meal_date);
+            const rowMonth = rowDate.getUTCMonth(); 
+            const rowYear = rowDate.getUTCFullYear();
+            
+            const lunchCount = Number(row.lunch_count) || 0;
+            const dinnerCount = Number(row.dinner_count) || 0;
+            const guestCount = Number(row.guest_count) || 0;
+            
+            const totalDayMeal = lunchCount + dinnerCount + guestCount;
+
+            if (rowMonth === currentMonth && rowYear === currentYear) {
+                currentMonthTotal += totalDayMeal;
+                distribution.lunch += lunchCount;
+                distribution.dinner += dinnerCount;
+                distribution.guest += guestCount;
+                
+                const displayDate = `${rowDate.getUTCDate()} ${rowDate.toLocaleString('default', { month: 'short', timeZone: 'UTC' })}`;
+                dailyTrend.labels.push(displayDate);
+                dailyTrend.data.push(totalDayMeal);
+            }
+            else if (rowMonth === currentMonth - 1 || (currentMonth === 0 && rowMonth === 11)) {
+                prevMonthTotal += totalDayMeal;
+            }
+        });
+
+        // ৩. Growth Calculate করা (আগের মতোই থাকবে)
+        let growthPercentage = 0;
+        let isPositive = true;
+        
+        if (prevMonthTotal > 0) {
+            growthPercentage = ((currentMonthTotal - prevMonthTotal) / prevMonthTotal) * 100;
+        } else if (prevMonthTotal === 0 && currentMonthTotal > 0) {
+            growthPercentage = 100;
+        }
+        
+        if (growthPercentage < 0) {
+            isPositive = false;
+        }
+
+        res.status(200).json({
+            distribution,
+            dailyTrend,
+            growth: {
+                value: Math.abs(growthPercentage).toFixed(1),
+                isPositive,
+                currentMonthTotal
+            }
+        });
+
+    } catch (error) {
+        console.error("❌ Analytics Error:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
 
 
 
 
 
+// user profile : 
 
+// user profile and analytics data fetch
+app.get("/api/user-profile-analytics", async (req, res) => {
+    const { userId, messId } = req.query;
 
+    if (!userId || !messId) {
+        return res.status(400).json({ error: "User ID and Mess ID are required" });
+    }
 
+    try {
+        // ১. ইউজারের বেসিক ইনফরমেশন
+        const [userInfo] = await db.query(
+            "SELECT username, profile_pic, created_at FROM users WHERE id = ?", 
+            [userId]
+        );
 
+        if (userInfo.length === 0) {
+            return res.status(404).json({ error: "User not found" });
+        }
 
+        // ২. এই মাসের বাজার খরচ (Bazaar Cost)
+        const [bazaar] = await db.query(
+            "SELECT SUM(total_price) as total FROM bazar_logs WHERE user_id = ? AND MONTH(bazar_date) = MONTH(CURDATE()) AND YEAR(bazar_date) = YEAR(CURDATE())",
+            [userId]
+        );
+
+        // ৩. এই মাসের নিজের মিল এবং গেস্ট মিল (Meals)
+        const [meals] = await db.query(
+            "SELECT SUM(lunch + dinner) as user_meals, SUM(guest) as guest_meals FROM meals WHERE user_id = ? AND MONTH(meal_date) = MONTH(CURDATE()) AND YEAR(meal_date) = YEAR(CURDATE())",
+            [userId]
+        );
+
+        // ৪. মেসের বর্তমান মিল রেট বের করা (Current Meal Rate)
+        const [messTotalBazaar] = await db.query(
+            "SELECT SUM(total_price) as total FROM bazar_logs WHERE mess_id = ? AND MONTH(bazar_date) = MONTH(CURDATE())",
+            [messId]
+        );
+        const [messTotalMeals] = await db.query(
+            "SELECT SUM(m.lunch + m.dinner + m.guest) as total FROM meals m JOIN users u ON m.user_id = u.id WHERE u.mess_id = ? AND MONTH(m.meal_date) = MONTH(CURDATE())",
+            [messId]
+        );
+
+        const totalBazaar = messTotalBazaar[0].total || 0;
+        const totalMealsCount = messTotalMeals[0].total || 1; // 0 দিয়ে ভাগ এড়ানোর জন্য
+        const currentMealRate = (totalBazaar / totalMealsCount).toFixed(2);
+
+        // ৫. মান্থলি সামারি (গত ৬ মাসের বার চার্টের জন্য)
+        const [history] = await db.query(
+            "SELECT MONTHNAME(meal_date) as month, SUM(lunch + dinner + guest) as total FROM meals WHERE user_id = ? GROUP BY MONTH(meal_date) ORDER BY MIN(meal_date) ASC LIMIT 6",
+            [userId]
+        );
+
+        // ফ্রন্টএন্ডে ডাটা পাঠানো
+        res.status(200).json({
+            user: userInfo[0],
+            stats: {
+                bazaarCost: Number(bazaar[0].total) || 0,
+                userMeals: Number(meals[0].user_meals) || 0,
+                guestMeals: Number(meals[0].guest_meals) || 0,
+                currentMealRate: parseFloat(currentMealRate)
+            },
+            history: {
+                labels: history.map(h => h.month.substring(0, 3)), // 'January' কে 'Jan' করবে
+                values: history.map(h => Number(h.total))
+            }
+        });
+
+    } catch (error) {
+        console.error("❌ Profile Analytics Error:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
 
 
 
