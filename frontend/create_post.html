@@ -119,6 +119,7 @@
 
     // ১. টাইপ সিলেক্ট করার লজিক
     function setType(type) {
+        // Toggle post type (rent/sale/other) and show/hide price input accordingly
         selectedType = type;
         // সব বাটন থেকে active ক্লাস সরানো
         document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
@@ -128,6 +129,7 @@
 
     // ২. প্রিভিউ দেখানোর মেইন ফাংশন
     function showPreview() {
+        // Display post preview with title, description, price, and image before submission
         const title = document.getElementById('title').value;
         const price = document.getElementById('price').value;
         const desc = document.getElementById('desc').value;
@@ -169,6 +171,7 @@
 
     // ৫. ডাটাবেসে সাবমিট করা
     async function submitToDB() {
+        // Upload post to backend with image, title, description, price, and type
         // ১. ফর্ম এলিমেন্ট সিলেক্ট করা
         const form = document.getElementById("postForm");
         

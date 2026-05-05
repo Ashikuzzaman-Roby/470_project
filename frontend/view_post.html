@@ -135,7 +135,7 @@
 
         async function loadSinglePost() {
             try {
-                // ১. পোস্ট ডাটা এবং বুকিং ডাটা একসাথে ফেচ করা (এখানে /api/ যোগ করা হয়েছে)
+                // Fetch post details and booked dates to populate rental UI
                 const [postRes, bookingRes] = await Promise.all([
                     fetch(`${api_base}/api/get-post/${postId}`),
                     fetch(`${api_base}/api/get-bookings/${postId}`)
@@ -198,6 +198,7 @@
         }
 
         function openModal(field) {
+            // Open calendar modal for start/end date selection
             activeField = field;
             document.getElementById('calendarModal').style.display = "block";
             renderPopUpCalendar();
@@ -206,6 +207,7 @@
         function closeModal() { document.getElementById('calendarModal').style.display = "none"; }
 
         function renderPopUpCalendar() {
+            // Render calendar grid showing available/booked/past dates for date range selection
             const grid = document.getElementById('cal-grid');
             const monthDisplay = document.getElementById('month-display');
 
@@ -253,6 +255,7 @@
         }
 
         function handleDateSelect(date) {
+            // Store selected start/end date and validate booking range
             if (activeField === 'start') {
                 startDate = date;
                 document.getElementById('start-display').innerText = "Start: " + date;
@@ -273,6 +276,7 @@
         }
 
         function validateAndCalculate() {
+            // Validate date range and calculate total rental price for selected period
             const errorMsg = document.getElementById('error-msg');
             const summaryBox = document.getElementById('price-summary-container');
             const submitBtn = document.getElementById('rental-btn');
@@ -322,6 +326,7 @@
 
         // making booking request for the products; :
         async function confirmBooking() {
+            // Submit rental booking request with dates and total price to backend
             // ১. ইউজার আইডি এবং টোটাল প্রাইস বের করা (ধরে নিচ্ছি ইউজার লগইন করা আছে)
             const userId = localStorage.getItem('userId'); // তোমার লজিক অনুযায়ী নিও
             

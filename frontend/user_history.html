@@ -226,6 +226,7 @@
 
     // ২. ইনকামিং রিকোয়েস্ট লোড করা (এই একটি ফাংশনই যথেষ্ট)
     async function fetchIncomingRequests() {
+        // Load and display all incoming rental booking requests for property owner
         // এখানে আইডি 'requests-container' হবে, কারণ তোমার HTML এ এটাই আছে
         const container = document.getElementById('requests-container'); 
         
@@ -271,6 +272,7 @@
 
     // ৩. নিজের বুকিং হিস্ট্রি টেবিল লোড করা
     async function fetchRentalHistory() {
+        // Retrieve user's rental booking history with dates and status
         const tbody = document.getElementById('history-table-body');
         try {
             const res = await fetch(`${API_BASE_URL}/api/user-rental-history/${userId}`);
@@ -292,6 +294,7 @@
 
 
     async function updateStatus(bookingId, action) {
+        // Accept or reject booking request and update status in database
         let statusName;
 
         if (action === 'accepted') {
