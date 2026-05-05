@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Details | Mess Management</title>
+    <style>
+        :root {
+            --bg-dark: #0f0c29; 
+            --sidebar-bg: #161625;      
+            --card-bg: #1e1e3f;         
+            --accent-cyan: #00d1ff;     
+            --accent-pink: #ff79c6;     
+            --accent-yellow: #f1fa8c;   
+            --text-main: #e6e6ef;       
+            --text-dim: #a0a0c0;        
+            --border-color: #3d3d6e;    
+            --header-gradient: linear-gradient(90deg, #ff79c6 0%, #bd93f9 50%, #00d1ff 100%);
+        }
+
+        body {
+            background: var(--bg-dark); color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            margin: 0; padding: 0; line-height: 1.6;
+        }
+
+        .details-container { max-width: 900px; margin: 40px auto; padding: 20px; }
+        
+        .back-btn { 
+            display: inline-flex; align-items: center; gap: 8px; color: var(--accent-cyan); 
+            text-decoration: none; margin-bottom: 25px; font-weight: bold; transition: 0.3s;
+        }
+        .back-btn:hover { color: var(--accent-pink); transform: translateX(-5px); }
+        
+        .premium-card {
+            background: rgba(30, 30, 63, 0.6); backdrop-filter: blur(15px);
+            border: 1px solid var(--border-color); border-radius: 24px;
+            overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+
+        .hero-image {
+            width: 100%; height: auto; max-height: 500px;
+            object-fit: cover; object-position: center;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .details-body { padding: 40px; }
+        .post-title { font-size: 32px; margin: 10px 0; background: var(--header-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .action-section {
+            background: rgba(0,0,0,0.2); padding: 25px; border-radius: 20px;
+            border: 1px solid var(--border-color); margin: 30px 0;
+        }
+
+        /* --- Modal & Calendar --- */
+        .modal {
+            display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+        }
+        .modal-content {
+            background: var(--sidebar-bg); margin: 5% auto; padding: 25px;
+            border: 1px solid var(--accent-cyan); border-radius: 20px; width: 90%; max-width: 380px;
+            box-shadow: 0 0 30px rgba(0, 209, 255, 0.2);
+        }
+
+        .calendar-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+        }
+        .nav-btn { background: none; border: 1px solid var(--accent-cyan); color: var(--accent-cyan); cursor: pointer; border-radius: 5px; padding: 5px 10px; }
+
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .cal-day {
+            height: 40px; display: flex; align-items: center; justify-content: center;
+            border-radius: 10px; font-size: 14px; font-weight: bold; transition: 0.2s;
+        }
+        .available { background: rgba(80, 250, 123, 0.1); color: #50fa7b; border: 1px solid rgba(80, 250, 123, 0.2); cursor: pointer; }
+        .available:hover { background: rgba(80, 250, 123, 0.3); }
+        .booked { background: rgba(255, 85, 85, 0.15); color: #ff5555; text-decoration: line-through; border: 1px solid rgba(255, 85, 85, 0.3); cursor: not-allowed; opacity: 0.6; }
+        .past { background: rgba(255,255,255,0.05); color: #666; cursor: not-allowed; }
+        .selected { background: var(--accent-pink) !important; color: white !important; border-color: white !important; }
+
+        .date-trigger {
+            width: 100%; padding: 14px; background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color); color: white; border-radius: 12px;
+            text-align: left; cursor: pointer; margin-bottom: 12px; font-size: 15px; box-sizing: border-box;
+        }
+
+        .price-summary-box { 
+            margin-top: 20px; padding: 15px; background: rgba(0, 209, 255, 0.05); 
+            border: 1px dashed var(--accent-cyan); border-radius: 12px; display: none; text-align: center;
+        }
+
+        .send-req-btn {
+            width: 100%; padding: 16px; margin-top: 15px; border-radius: 12px; border: none;
+            font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s;
+        }
+        .btn-disabled { background: #333; color: #777; cursor: not-allowed; }
+        .btn-active { background: var(--header-gradient); color: white; }
+
+        #error-msg { color: #ff5555; font-size: 14px; margin-top: 10px; display: none; font-weight: bold; text-align: center; }
+        .desc-box { margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color); }
+    </style>
+</head>
+<body>
+
+    <div class="details-container">
+        <div id="post-detail-container">
+            <p style="text-align: center; margin-top: 50px;">Loading Post Details...</p>
+        </div>
+    </div>
+
+    <div id="calendarModal" class="modal">
+        <div class="modal-content">
+            <div class="calendar-header">
+                <button class="nav-btn" onclick="changeMonth(-1)">◀</button>
+                <h4 id="month-display" style="margin:0; color:var(--accent-cyan);"></h4>
+                <button class="nav-btn" onclick="changeMonth(1)">▶</button>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+            <button onclick="closeModal()" style="margin-top:20px; background:none; border:1px solid #ff5555; color:#ff5555; padding:8px 15px; border-radius:8px; cursor:pointer; width:100%;">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const api_base = "http://localhost:8000"; 
+        const urlParams = new URLSearchParams(window.location.search);
+        const postId = urlParams.get('id');
+
+        let occupiedDates = []; 
+        let currentViewDate = new Date(); 
+        let perDayPrice = 0;
+        let activeField = null; 
+        let startDate = null;
+        let endDate = null;
+
+        async function loadSinglePost() {
+            try {
+                // ১. পোস্ট ডাটা এবং বুকিং ডাটা একসাথে ফেচ করা (এখানে /api/ যোগ করা হয়েছে)
+                const [postRes, bookingRes] = await Promise.all([
+                    fetch(`${api_base}/api/get-post/${postId}`),
+                    fetch(`${api_base}/api/get-bookings/${postId}`)
+                ]);
+
+                const post = await postRes.json();
+                const bookingData = await bookingRes.json();
+
+                perDayPrice = post.price;
+                if (bookingData.success) {
+                    occupiedDates = bookingData.occupiedDates;
+                }
+
+                renderPostUI(post);
+            } catch (err) { 
+                console.error("Error loading page:", err); 
+            }
+        }
+
+        function renderPostUI(post) {
+            const container = document.getElementById('post-detail-container');
+            const img = post.image_path ? `${api_base}${post.image_path}` : 'https://via.placeholder.com/900x450';
+
+            let html = `
+                <a href="user.html" class="back-btn">⬅ Back to Newsfeed</a>
+                <div class="premium-card">
+                    <img src="${img}" class="hero-image">
+                    <div class="details-body">
+                        <h1 class="post-title">${post.title}</h1>
+                        <p style="color:var(--accent-cyan); margin-bottom:20px;">🏠 ${post.mess_name || 'Unity Mess'}</p>
+                        <div class="desc-box">
+                            <h4>Description</h4>
+                            <p>${post.description}</p>
+                        </div>
+            `;
+
+            if (post.post_type === 'rent') {
+                html += `
+                    <div class="action-section">
+                        <h4 style="color:var(--accent-cyan); margin-bottom:15px;">📅 Book Your Stay</h4>
+                        <div id="start-display" class="date-trigger" onclick="openModal('start')">📅 Select Start Date</div>
+                        <div id="end-display" class="date-trigger" onclick="openModal('end')">📅 Select End Date</div>
+                        <div id="error-msg"></div>
+                        <div id="price-summary-container" class="price-summary-box"><div id="price-summary"></div></div>
+                        <button id="rental-btn" class="send-req-btn btn-disabled" disabled onclick="confirmBooking()">Confirm Booking</button>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="action-section" style="border-color: var(--accent-yellow);">
+                        <h4 style="color:var(--accent-yellow);">💰 Item for Sale</h4>
+                        <div style="font-size: 26px; font-weight: bold; margin-bottom: 15px;">Price: ৳ ${post.price}</div>
+                        <button class="send-req-btn btn-active" onclick="alert('Request sent!')">🛒 Request to Buy</button>
+                    </div>
+                `;
+            }
+
+            html += `</div></div>`;
+            container.innerHTML = html;
+        }
+
+        function openModal(field) {
+            activeField = field;
+            document.getElementById('calendarModal').style.display = "block";
+            renderPopUpCalendar();
+        }
+
+        function closeModal() { document.getElementById('calendarModal').style.display = "none"; }
+
+        function renderPopUpCalendar() {
+            const grid = document.getElementById('cal-grid');
+            const monthDisplay = document.getElementById('month-display');
+
+            const year = currentViewDate.getFullYear();
+            const month = currentViewDate.getMonth();
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            
+            monthDisplay.innerText = monthNames[month] + " " + year;
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const monthPrefix = year + "-" + String(month + 1).padStart(2, '0');
+            const today = new Date().toISOString().split('T')[0];
+
+            let html = '';
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dateStr = monthPrefix + "-" + String(i).padStart(2, '0');
+                
+                const isBooked = occupiedDates.includes(dateStr);
+                const isPast = dateStr < today;
+                const isSelected = (dateStr === startDate || dateStr === endDate);
+                const isDisabled = isBooked || isPast;
+
+                // --- ইফ-এলস স্টাইল ক্লাস ---
+                let classNames = "cal-day";
+                if (isBooked) {
+                    classNames = classNames + " booked";
+                } else if (isPast) {
+                    classNames = classNames + " past";
+                } else {
+                    classNames = classNames + " available";
+                }
+                if (isSelected) {
+                    classNames = classNames + " selected";
+                }
+
+                // --- ইফ-এলস স্টাইল ক্লিক ---
+                let onClickAction = "";
+                if (isDisabled === false) {
+                    onClickAction = "handleDateSelect('" + dateStr + "')";
+                }
+
+                html += '<div class="' + classNames + '" onclick="' + onClickAction + '">' + i + '</div>';
+            }
+            grid.innerHTML = html;
+        }
+
+        function handleDateSelect(date) {
+            if (activeField === 'start') {
+                startDate = date;
+                document.getElementById('start-display').innerText = "Start: " + date;
+            } else {
+                endDate = date;
+                document.getElementById('end-display').innerText = "End: " + date;
+            }
+            closeModal();
+            validateAndCalculate();
+        }
+
+        function changeMonth(offset) {
+            let nextDate = new Date(currentViewDate);
+            nextDate.setMonth(nextDate.getMonth() + offset);
+            if (nextDate < new Date(new Date().getFullYear(), new Date().getMonth(), 1)) return;
+            currentViewDate = nextDate;
+            renderPopUpCalendar();
+        }
+
+        function validateAndCalculate() {
+            const errorMsg = document.getElementById('error-msg');
+            const summaryBox = document.getElementById('price-summary-container');
+            const submitBtn = document.getElementById('rental-btn');
+
+            if (!startDate || !endDate) return;
+
+            const dStart = new Date(startDate);
+            const dEnd = new Date(endDate);
+
+            if (dEnd < dStart) {
+                showError("End date cannot be before start date!");
+                submitBtn.disabled = true;
+                submitBtn.className = "send-req-btn btn-disabled";
+                return;
+            }
+
+            let current = new Date(dStart);
+            let hasConflict = false;
+            let totalDays = 0;
+            while (current <= dEnd) {
+                const dateStr = current.toISOString().split('T')[0];
+                if (occupiedDates.includes(dateStr)) { hasConflict = true; break; }
+                totalDays++;
+                current.setDate(current.getDate() + 1);
+            }
+
+            if (hasConflict) {
+                showError("❌ Conflict! Range includes booked dates.");
+                summaryBox.style.display = 'none';
+                submitBtn.disabled = true;
+                submitBtn.className = "send-req-btn btn-disabled";
+            } else {
+                errorMsg.style.display = 'none';
+                summaryBox.style.display = 'block';
+                const total = totalDays * perDayPrice;
+                document.getElementById('price-summary').innerHTML = `💰 <strong>${perDayPrice}</strong> × <strong>${totalDays} Days</strong> = <span style="font-size:20px; color:var(--accent-yellow);">৳ ${total}</span>`;
+                submitBtn.disabled = false;
+                submitBtn.className = "send-req-btn btn-active";
+            }
+        }
+
+        function showError(msg) {
+            const errorMsg = document.getElementById('error-msg');
+            errorMsg.innerText = msg;
+            errorMsg.style.display = 'block';
+        }
+
+        // making booking request for the products; :
+        async function confirmBooking() {
+            // ১. ইউজার আইডি এবং টোটাল প্রাইস বের করা (ধরে নিচ্ছি ইউজার লগইন করা আছে)
+            const userId = localStorage.getItem('userId'); // তোমার লজিক অনুযায়ী নিও
+            
+            if(!userId) {
+                alert("Please login first!");
+                window.location.href="./login.html"
+                return;
+            }
+
+            const dStart = new Date(startDate);
+            const dEnd = new Date(endDate);
+            const totalDays = Math.ceil((dEnd - dStart) / (1000 * 60 * 60 * 24)) + 1;
+            const totalPrice = totalDays * perDayPrice;
+
+            const bookingData = {
+                post_id: postId,
+                user_id: userId,
+                start_date: startDate,
+                end_date: endDate,
+                total_price: totalPrice
+            };
+
+            try {
+                // এখানে /api/ যোগ করা হয়েছে
+                const response = await fetch(`${api_base}/api/create-booking`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bookingData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert("🔥 Booking Successful!");
+                    location.reload(); // পেজ রিলোড করলে নতুন বুকিং ক্যালেন্ডারে লাল হয়ে যাবে
+                } else {
+                    alert("❌ Error: " + result.message);
+                }
+            } catch (err) {
+                console.error("Booking Error:", err);
+                alert("Server not responding!");
+            }
+        }
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('calendarModal')) closeModal();
+        }
+
+        window.onload = loadSinglePost;
+    </script>
+</body>
+</html>

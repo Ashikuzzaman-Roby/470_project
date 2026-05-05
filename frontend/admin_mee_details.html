@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Jellyfish Cyberpunk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #1e1e3f;
+            --card-bg: #25254d;
+            --text-main: #e6e6ef;
+            --accent-cyan: #00d1ff;
+            --accent-pink: #ff79c6;
+            --accent-yellow: #f1fa8c;
+            --border-color: #3d3d6e;
+            --danger: #ff5555;
+            --success: #50fa7b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #1e1e3f);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- NAVIGATION BAR --- */
+        nav {
+            background: rgba(30, 30, 63, 0.8) !important;
+            backdrop-filter: blur(12px);
+            padding: 12px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--accent-cyan);
+            box-shadow: 0 0 25px rgba(0, 209, 255, 0.25);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-user-profile { display: flex; align-items: center; gap: 15px; }
+
+        .user-avatar-wrapper { position: relative; width: 48px; height: 48px; }
+
+        #nav-user-img {
+            width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
+            border: 2px solid var(--accent-cyan); box-shadow: 0 0 10px var(--accent-cyan);
+            transition: all 0.4s ease;
+        }
+
+        .user-avatar-wrapper:hover #nav-user-img {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 0 20px var(--accent-cyan);
+        }
+
+        .online-indicator {
+            position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px;
+            background: var(--success); border: 2px solid #1e1e3f; border-radius: 50%;
+            box-shadow: 0 0 8px var(--success); animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .user-text { display: flex; flex-direction: column; line-height: 1.2; }
+        .hello-text { font-size: 0.7rem; color: var(--accent-pink); text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
+        .admin-name { font-weight: 700; font-size: 1.1rem; color: var(--text-main); }
+
+        /* Nav Buttons */
+        .nav-buttons { display: flex; gap: 15px; }
+
+        .cyber-btn {
+            padding: 10px 20px; font-size: 12px; font-weight: 700;
+            text-transform: uppercase; text-decoration: none; border-radius: 4px;
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: transparent; border: 1px solid; letter-spacing: 1.5px;
+        }
+
+        .btn-home { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+        .btn-home:hover { background: var(--accent-cyan) !important; color: #1e1e3f !important; box-shadow: 0 0 20px var(--accent-cyan); }
+
+        .btn-dash { border-color: var(--accent-yellow); color: var(--accent-yellow); }
+        .btn-dash:hover { background: var(--accent-yellow) !important; color: #1e1e3f !important; box-shadow: 0 0 20px var(--accent-yellow); }
+
+        .btn-out { border-color: var(--accent-pink); color: var(--accent-pink); }
+        .btn-out:hover { background: var(--accent-pink) !important; color: #1e1e3f !important; box-shadow: 0 0 20px var(--accent-pink); }
+
+        /* --- LAYOUT & CARDS --- */
+        .admin-wrapper { display: flex; flex: 1; overflow: hidden; }
+        .left-content-area { flex: 1; padding: 40px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .right-sidebar-panel { width: 50%; padding: 20px; background: rgba(0, 0, 0, 0.2); overflow-y: auto; }
+
+        .section-box { background: var(--card-bg); padding: 20px; border-radius: 15px; border: 1px solid var(--border-color); margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+
+        #user-table, #request-table-body { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; padding-top: 15px; }
+
+        .member-card {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            padding: 30px 20px; border-radius: 20px; text-align: center;
+            position: relative; overflow: hidden; transition: 0.4s;
+            display: flex; flex-direction: column; justify-content: space-between;
+            min-height: 320px; z-index: 1;
+        }
+
+        .member-card:hover { transform: translateY(-10px); border-color: var(--accent-cyan); box-shadow: 0 0 30px rgba(0, 209, 255, 0.2); }
+
+        .member-pic {
+            width: 100px; height: 100px; border-radius: 50%; object-fit: cover;
+            border: 3px solid var(--border-color); margin: 0 auto 15px; transition: 0.4s;
+        }
+
+        .member-card:hover .member-pic { border-color: var(--accent-cyan); box-shadow: 0 0 20px var(--accent-cyan); transform: scale(1.05); }
+
+        .role-badge { background: rgba(241, 250, 140, 0.1); color: var(--accent-yellow); font-size: 0.65rem; padding: 4px 12px; border-radius: 50px; text-transform: uppercase; letter-spacing: 1.5px; border: 1px solid rgba(241, 250, 140, 0.3); }
+
+        .btn-remove-member {
+            width: 100%; padding: 12px; border-radius: 10px; background: transparent;
+            color: var(--danger); border: 1px solid var(--danger); cursor: pointer;
+            font-weight: 700; transition: 0.3s; margin-top: 15px;
+        }
+
+        .btn-remove-member:hover { background: var(--danger) !important; color: #ffffff !important; box-shadow: 0 0 20px rgba(255, 85, 85, 0.5); }
+
+        .btn-accept { background: var(--success); color: #000; border:none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 48%; }
+        .btn-reject { background: var(--danger); color: #fff; border:none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 48%; }
+
+        @media (max-width: 992px) {
+            .admin-wrapper { flex-direction: column; }
+            .right-sidebar-panel { width: 100%; }
+            nav { padding: 10px 15px; flex-wrap: wrap; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-user-profile">
+            <div class="user-avatar-wrapper" style="width: 48px; height: 48px; min-width: 48px;">
+                <img id="nav-user-img" 
+                    src="https://ui-avatars.com/api/?name=Admin&background=3d3d6e&color=fff" 
+                    alt="Admin" 
+                    style="display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                <div class="online-indicator"></div>
+            </div>
+            <div class="user-text">
+                <span class="hello-text">System Admin</span>
+                <span id="nav-user-name" class="admin-name">Loading...</span>
+            </div>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="./home.html" class="cyber-btn btn-home">Home</a>
+            <a href="./admin.html" class="cyber-btn btn-dash">Dashboard</a>
+            <button onclick="handleLogout()" class="cyber-btn btn-out">Logout</button>
+        </div>
+    </nav>
+
+    <div class="admin-wrapper">
+
+        <div class="left-content-area">
+            <h1 style="opacity: 0.1; font-size: 4rem;">MAIN CONTENT</h1>
+
+            <div class="left-content-area" style="justify-content: flex-start; align-items: stretch;">
+                <div class="section-box">
+                    <h2 style="color: var(--accent-cyan); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                        🛒 Pending Bazar Verification
+                    </h2>
+                    <div id="pending-bazar-container">
+                        <p style="text-align: center; opacity: 0.5; margin-top: 20px;">Checking for requests...</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="right-sidebar-panel">
+            <div class="section-box">
+                <h2>Pending Requests <small style="color: var(--accent-pink)">#NEW</small></h2>
+                <div id="request-table-body"></div>
+            </div>
+
+            <div class="section-box">
+                <h2>Mess Members <small style="color: var(--success)">LIVE</small></h2>
+                <div id="user-table"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- ধাপ ১: ইউটিলিটি ফাংশনগুলো সবার আগে (ফাংশনের বাইরে) ---
+        function getFullImageUrl(pic) {
+            if (!pic || pic === 'null') return null;
+            return `http://localhost:8000${pic}`; // তোমার সার্ভার পোর্ট অনুযায়ী
+        }
+
+        function setAvatar(imgElement, pic, name) {
+            const hasPic = pic && pic !== 'null' && pic !== 'undefined' && pic !== '';
+            
+            if (hasPic) {
+                imgElement.src = getFullImageUrl(pic);
+            } else {
+                // ছবি না থাকলে UI-Avatar (কোনো 404 এরর আসবে না)
+                imgElement.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=00d2ff&color=fff&bold=true`;
+            }
+
+            // ব্যাকআপ এরর হ্যান্ডলার (যদি পাথ ঠিক থাকে কিন্তু ফাইল সার্ভারে না থাকে)
+            imgElement.onerror = function() {
+                this.onerror = null;
+                this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3d3d6e&color=fff`;
+            };
+        }
+
+        // --- ধাপ ২: মেইন ইভেন্ট লিসেনার ---
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // ১. সিকিউরিটি চেক
+            const role = localStorage.getItem('role');
+            if (role !== 'admin') {
+                window.location.href = "./login.html";
+                return;
+            }
+
+            // ২. ডাটা কালেকশন
+            const username = localStorage.getItem('username') || 'Admin';
+            const storedPic = localStorage.getItem('profile_pic');
+
+            // ৩. UI এলিমেন্ট সিলেকশন
+            const navName = document.getElementById('nav-user-name');
+            const navImg = document.getElementById('nav-user-img');
+
+            // ৪. নাম ও ছবি সেট করা (ফাংশন কল করা)
+            if (navName) navName.innerText = username;
+            if (navImg) {
+                setAvatar(navImg, storedPic, username);
+            }
+
+            // ৫. ডাটা লোড ফাংশনগুলো কল করা (সবশেষে)
+            loadPendingRequests();
+            loadMembers();
+            fetchPendingBazar();
+        });
+
+        const BASE_URL = 'http://localhost:8000';
+
+        function getFullImageUrl(path, username) {
+            // সব ধরনের ইনভ্যালিড পাথ চেক করা
+            if (!path || path === 'null' || path === 'NULL' || path === 'undefined' || path === '') {
+                return `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=3d3d6e&color=fff`;
+            } 
+            
+            if (path.startsWith('http')) {
+                return path;
+            } 
+            
+            // পাথ ক্লিন করা
+            let cleanPath = path;
+            if (!path.startsWith('/public')) {
+                cleanPath = '/public/' + path.replace(/^\/+/, '');
+            }
+            
+            // ডাবল স্ল্যাশ রিমুভ করে ফাইনাল URL পাঠানো
+            return `${BASE_URL}${cleanPath}`.replace(/([^:]\/)\/+/g, "$1");
+        }
+
+        // তোমার সেই ফাংশন (যেটা আগে কল হচ্ছিল না)
+        function setupNavProfile() {
+            const username = localStorage.getItem('username') || 'Admin';
+            const profilePic = localStorage.getItem('profile_pic');
+            
+            const navName = document.getElementById('nav-user-name');
+            const navImg = document.getElementById('nav-user-img');
+
+            if (navName) navName.innerText = username;
+            if (navImg) navImg.src = getFullImageUrl(profilePic, username);
+        }
+
+        // --- বাকি মেম্বার লোড ও রিমুভ ফাংশনগুলো আগের মতোই থাকবে ---
+        async function loadMembers() {
+            const messId = localStorage.getItem('messId');
+            const grid = document.getElementById('user-table');
+            try {
+                // আপডেট করা হয়েছে: /api/ যুক্ত করা হলো
+                const res = await fetch(`${BASE_URL}/api/mess-members/${messId}`);
+                const members = await res.json();
+                grid.innerHTML = "";
+
+                members.forEach(m => {
+                    const finalImg = getFullImageUrl(m.profile_pic, m.username);
+                    const targetId = m.user_id || m.id;
+
+                    const card = document.createElement('div');
+                    card.className = 'member-card';
+                    card.innerHTML = `
+                        <div>
+                            <img src="${finalImg}" class="member-pic" 
+                                onerror="this.src='https://ui-avatars.com/api/?name=${m.username}&background=3d3d6e&color=fff'">
+                            <div>
+                                <span class="role-badge">${m.role}</span>
+                                <div style="font-weight:700; color:var(--text-main); font-size: 1.2rem; margin-top: 10px;">${m.username}</div>
+                                <div style="color:var(--accent-pink); font-size:0.75rem;">UID: #${targetId}</div>
+                            </div>
+                        </div>
+                        <div class="action-holder">
+                            <div style="height: 1px; background: var(--border-color); margin: 15px 0;"></div>
+                            <button type="button" class="btn-remove-member" 
+                                    onclick="handleRemoveMember('${targetId}', '${messId}', '${m.username}', '${m.role}')">
+                                REMOVE ${m.username}
+                            </button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (e) {
+                console.error("Error fetching members:", e);
+            }
+        }
+
+        async function handleRemoveMember(userId, messId, userName, memberRole) {
+            if(memberRole === "admin" || memberRole === "Admin"){
+                alert(`Admin cannot be deleted!`);
+                return;
+            }
+            if (!confirm(`আপনি কি নিশ্চিতভাবে "${userName}" কে মেস থেকে বাদ দিতে চান?`)) return;
+            try {
+                // আপডেট করা হয়েছে: /api/ যুক্ত করা হলো
+                const response = await fetch(`${BASE_URL}/api/remove-member`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: userId, messId: messId })
+                });
+                if (response.ok) {
+                    alert(`${userName} সফলভাবে রিমুভ হয়েছে!`);
+                    loadMembers(); 
+                } else {
+                    const errData = await response.json();
+                    alert("রিমুভ করা যায়নি: " + (errData.message || "সার্ভার এরর"));
+                }
+            } catch (err) {
+                console.error("Delete Error:", err);
+                alert("সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না।");
+            }
+        }
+
+        async function loadPendingRequests() {
+            const messId = localStorage.getItem('messId');
+            const container = document.getElementById('request-table-body');
+            try {
+                // আপডেট করা হয়েছে: /api/ যুক্ত করা হলো
+                const res = await fetch(`${BASE_URL}/api/pending-requests/${messId}`);
+                const requests = await res.json();
+                container.innerHTML = requests.length === 0 ? "<p>No requests found.</p>" : "";
+                requests.forEach(req => {
+                    const card = document.createElement('div');
+                    card.className = "member-card";
+                    card.innerHTML = `
+                        <img src="${getFullImageUrl(req.profile_pic, req.username)}" class="member-pic">
+                        <h3>${req.username}</h3>
+                        <div style="display:flex; justify-content:space-between; gap:10px;">
+                            <button class="btn-accept" onclick="approveMember(${req.id}, ${req.user_id}, ${messId})">Accept</button>
+                            <button class="btn-reject" onclick="rejectMember(${req.id})">Reject</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function approveMember(requestId, userId, messId) {
+            // আপডেট করা হয়েছে: /api/ যুক্ত করা হলো
+            const res = await fetch(`${BASE_URL}/api/accept-request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ request_id: requestId, user_id: userId, mess_id: messId })
+            });
+            if (res.ok) { loadPendingRequests(); loadMembers(); }
+        }
+
+        async function rejectMember(requestId) {
+            if (!confirm("Reject this request?")) return;
+            // আপডেট করা হয়েছে: /api/ যুক্ত করা হলো
+            const res = await fetch(`${BASE_URL}/api/reject-request/${requestId}`, { method: 'DELETE' });
+            if (res.ok) loadPendingRequests();
+        }
+
+        function handleLogout() {
+            localStorage.clear();
+            window.location.href = "./login.html";
+        }
+
+        // ==========================  left side developing : =================================
+
+        // key feature : 
+        // admin will approve the bazar from the mess members :
+
+        // ১. পেন্ডিং বাজার লোড করার ফাংশন
+        async function fetchPendingBazar() {
+            const messId = localStorage.getItem('messId');
+            const container = document.getElementById('pending-bazar-container');
+
+            try {
+                // এখানে আগে থেকেই /api/ দেওয়া ছিল, তাই পরিবর্তন করা হয়নি
+                const res = await fetch(`${BASE_URL}/api/get-pending-bazar/${messId}`);
+                const data = await res.json();
+
+                if (data.length === 0) {
+                    container.innerHTML = `<p style="text-align: center; color: var(--text-dim); padding: 20px;">No pending bazar requests. Everything is up to date! ✅</p>`;
+                    return;
+                }
+
+                container.innerHTML = data.map(item => `
+                    <div class="member-card" style="min-height: auto; margin-bottom: 15px; text-align: left; padding: 20px; border-left: 4px solid var(--accent-yellow);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong style="color: var(--accent-cyan); font-size: 1.1rem;">${item.username}</strong>
+                            <span style="color: var(--success); font-weight: bold; font-size: 1.2rem;">৳${item.total_price}</span>
+                        </div>
+                        <div style="margin: 10px 0; color: var(--text-main); font-size: 0.9rem;">
+                            <strong>Items:</strong> ${item.items} <br>
+                            <strong>Date:</strong> ${new Date(item.bazar_date).toLocaleDateString()}
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <button class="btn-accept" style="flex: 1;" onclick='processBazar(${JSON.stringify(item)}, "approve")'>Approve</button>
+                            <button class="btn-reject" style="flex: 1;" onclick='processBazar(${JSON.stringify(item)}, "reject")'>Deny</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error("Error loading pending bazar:", err);
+            }
+        }
+
+        // ২. Approve বা Reject হ্যান্ডেল করার ফাংশন
+        async function processBazar(item, action) {
+            // এখানেও আগে থেকেই /api/ যুক্ত ছিল, তাই ঠিক রেখেছি
+            const endpoint = action === "approve" ? "/api/approve-bazar" : `/api/reject-bazar/${item.id}`;
+            const method = action === "approve" ? "POST" : "DELETE";
+
+            try {
+                const response = await fetch(`${BASE_URL}${endpoint}`, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: action === "approve" ? JSON.stringify(item) : null
+                });
+
+                if (response.ok) {
+                    // সফল হলে লিস্ট রিফ্রেশ (ভ্যানিশ হয়ে যাবে)
+                    fetchPendingBazar();
+                } else {
+                    alert("Something went wrong!");
+                }
+            } catch (err) {
+                console.error("Action error:", err);
+            }
+        }
+    </script>
+</body>
+</html>

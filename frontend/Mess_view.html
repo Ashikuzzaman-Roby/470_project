@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mess Dashboard | Dhurvotara</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f0c29;         
+            --sidebar-bg: #161625;      
+            --card-bg: #1e1e3f;         
+            --accent-cyan: #00d1ff;     
+            --accent-pink: #ff79c6;     
+            --accent-yellow: #f1fa8c;   
+            --text-main: #e6e6ef;       
+            --text-dim: #a0a0c0;        
+            --border-color: #3d3d6e;    
+            --success: #50fa7b;
+            --active-bg: rgba(0, 209, 255, 0.1);
+            --header-gradient: linear-gradient(90deg, #ff79c6 0%, #bd93f9 50%, #00d1ff 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            background-color: var(--bg-dark); 
+            color: var(--text-main); 
+            padding: 30px;
+            overflow-x: hidden;
+        }
+
+        /* side bar and toggle button :  */
+        /* --- Sidebar & Toggle Layout --- */
+        .side-menu {
+            position: fixed;
+            top: 0;
+            left: -250px; /* শুরুতে বামে লুকিয়ে থাকবে */
+            width: 250px;
+            height: 100vh;
+            background: var(--sidebar-bg);
+            border-right: 2px solid var(--accent-cyan);
+            z-index: 1000;
+            transition: 0.4s ease-in-out;
+            padding: 60px 20px;
+            box-shadow: 10px 0 20px rgba(0,0,0,0.5);
+        }
+
+        .side-menu.active {
+            left: 0; /* ক্লিক করলে শো করবে */
+        }
+
+        /* Toggle Button Style */
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: var(--card-bg);
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 209, 255, 0.3);
+        }
+
+        /* Sidebar এর ভেতরের Back Button */
+        .side-back-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-weight: 600;
+            padding: 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            transition: 0.3s;
+        }
+
+        .side-back-btn:hover {
+            background: var(--accent-pink);
+            color: white;
+        }
+
+        /* --- Mobile Specific Optimization --- */
+        @media (max-width: 600px) {
+            body { padding: 60px 15px 20px 15px; } /* টগল বাটনের জন্য উপরে জায়গা */
+
+            .today_mess_details {
+                grid-template-columns: 1fr; /* ফোনে কার্ডগুলো এক কলামে */
+            }
+
+            #user-table {
+                grid-template-columns: 1fr; /* মেম্বার কার্ডও ফোনে এক কলামে */
+            }
+
+            .stat-card, .member-card {
+                width: 100%; /* ফোনে যেন পুরো চওড়া হয় */
+                margin-bottom: 10px;
+            }
+        }
+
+        /* --- Header --- */
+        .header { text-align: center; margin-bottom: 40px; }
+        .header h1 { 
+            font-size: 2.8rem; 
+            background: var(--header-gradient); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+
+        /* --- Stats Row --- */
+        .today_mess_details { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 40px; 
+        }
+        
+        .stat-card { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border-color); 
+            padding: 20px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        /* --- Members Section (Dynamic Grid) --- */
+        .section-box { 
+            background: rgba(22, 22, 37, 0.5); 
+            border: 1px solid var(--border-color); 
+            padding: 30px; 
+            border-radius: 20px; 
+        }
+
+        .section-header {
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #user-table { 
+            display: grid; 
+            /* এটাই আসল খেলা: auto-fill দিলে কার্ড সাইড বড় হবে না */
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
+            gap: 30px; 
+        }
+
+        /* --- The Glowing Member Card --- */
+        .member-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 35px 20px;
+            min-height: 380px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .member-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(0, 209, 255, 0.2);
+        }
+
+        .member-pic-wrapper {
+            width: 110px;
+            height: 110px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .member-pic {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--border-color);
+            transition: 0.3s;
+        }
+
+        .member-card:hover .member-pic {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px var(--accent-cyan);
+        }
+
+        .role-badge {
+            background: var(--active-bg);
+            color: var(--accent-cyan);
+            padding: 5px 15px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            border: 1px solid rgba(0, 209, 255, 0.3);
+            margin-bottom: 8px;
+        }
+
+        .member-name { font-size: 1.4rem; font-weight: 700; }
+        .member-id { color: var(--accent-pink); font-size: 0.75rem; font-family: monospace; }
+
+        .card_user_button {
+            margin-top: 15px;
+            background: transparent;
+            color: var(--accent-pink);
+            border: 1px solid var(--accent-pink);
+            padding: 6px 15px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 80%;
+            transition: 0.3s;
+        }
+
+        .card_user_button:hover {
+            background: var(--accent-pink);
+            color: #fff;
+        }
+
+        /* --- Overview --- */
+        .mess_overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 30px; }
+        .chart_box { background: var(--card-bg); padding: 25px; border-radius: 15px; border: 1px solid var(--border-color); text-align: center; }
+        
+        .placeholder_circle { 
+            width: 100px; height: 100px; border-radius: 50%; 
+            border: 6px solid var(--border-color); border-top: 6px solid var(--accent-pink); 
+            margin: 15px auto; animation: spin 2s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .stat-card:hover {
+            transform: translateY(-5px); /* হোভার করলে একটু উপরে উঠবে */
+            border-color: var(--accent-cyan);
+        }
+
+        .show_meal_rate {
+            margin-top: 10px;
+        }
+
+        .show_meal_rate p {
+            display: flex;
+            justify-content: space-between; /* টেক্সট আর সংখ্যা দুইপাশে থাকবে */
+            margin: 8px 0;
+            font-size: 0.9rem;
+            color: #ccc;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 4px;
+        }
+
+        .show_meal_rate span {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace; /* একটু টেকনিক্যাল লুকের জন্য */
+        }
+
+        #meal-rate {
+            font-size: 1.5rem;
+            color: #55efc4; /* মিল রেটটাকে একটু হাইলাইট করার জন্য আলাদা কালার */
+            text-shadow: 0 0 5px rgba(85, 239, 196, 0.3);
+        }
+
+        /* animation :  */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .member-card {
+            animation: fadeInUp 0.5s ease backwards;
+        }
+    </style>
+</head>
+<body>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+
+    <div class="side-menu" id="sideMenu">
+        <h2 style="color: var(--accent-cyan); margin-bottom: 20px; font-size: 1.2rem;">Menu</h2>
+        <a href="./home.html" class="side-back-btn">
+            <span>⬅</span> Go to Home
+        </a>
+    </div>
+
+    <header class="header">
+        <h1>Mess Dashboard</h1>
+        <p style="color: var(--text-dim)" id="demo1"></p>
+    </header>
+
+    <div class="today_mess_details">
+        <div class="stat-card">
+            <h3 style="color: var(--accent-cyan); font-size: 0.8rem;">TODAY'S MEAL</h3>
+            <div id="meal-summary"></div>
+        </div>
+
+        <div class="stat-card">
+            <h3 style="color: var(--accent-cyan); font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase;">
+                <i class="fas fa-calculator"></i> MEAL RATE SUMMARY
+            </h3>
+            
+            <div class="show_meal_rate">
+                <p>Total Bazar: <span id="total-bazar">0.00</span></p>
+                <p>Total Meals: <span id="total-meals-count">0</span></p>
+                <p style="border: none; margin-top: 12px; background: rgba(0, 255, 255, 0.1); padding: 8px; border-radius: 6px;">
+                    <strong style="color: #fff;">Current Rate:</strong> 
+                    <span id="meal-rate"></span>
+                </p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <h1 style="color: var(--accent-cyan);">Notice From Mess Admin </h1>
+            <p style="color: var(--success)">● System Active</p>
+            <p style="color: var(--success)">Everything is up to date !! no notice yet !!</p>
+        </div>
+    </div>
+
+   <section class="section-box">
+        <div class="section-header">
+            <h2>Mess Members</h2>
+            <span style="background: var(--success); color: #000; padding: 2px 8px; border-radius: 5px; font-size: 0.6rem; font-weight: bold;">LIVE</span>
+        </div>
+        <div id="user-table">
+            </div>
+    </section>
+
+    <div class="mess_overview">
+        <div class="chart_box">
+            <h3>Meal Distribution</h3>
+            <div class="placeholder_circle"></div>
+        </div>
+        <div class="chart_box">
+            <h3>Monthly Growth</h3>
+            <p style="font-size: 2rem; color: var(--accent-yellow); font-weight: bold;">70%</p>
+        </div>
+    </div>
+
+    <script>
+        // for mobile responsiveness : 
+        function toggleMenu() {
+            const menu = document.getElementById('sideMenu');
+            menu.classList.toggle('active');
+        }
+
+        const BASE_URL = 'http://localhost:8000';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const messId = urlParams.get('id');
+
+            // for mobile responsiveness : 
+            window.addEventListener('click', (event) => {
+                const menu = document.getElementById('sideMenu');
+                const btn = document.querySelector('.menu-toggle');
+                
+                if (menu && menu.classList.contains('active')) {
+                    if (!menu.contains(event.target) && event.target !== btn) {
+                        menu.classList.remove('active');
+                    }
+                }
+            });
+
+            if (messId && messId !== 'null') {
+                loadMembers(messId);
+                loadTodayMeals(messId);
+                showing_mealrate(messId);
+            } else {
+                document.getElementById('user-table').innerHTML = "<p style='color:var(--accent-pink)'>Error: No Mess ID found!</p>";
+            }
+        });
+
+        function getFullImageUrl(path, username) {
+            if (!path || path === 'null' || path === '') {
+                return `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=3d3d6e&color=fff`;
+            }
+            if (path.startsWith('http')) return path;
+            return `${BASE_URL}${path.startsWith('/public') ? path : '/public/' + path.replace(/^\/+/, '')}`.replace(/([^:]\/)\/+/g, "$1");
+        }
+
+        async function loadMembers(messId) {
+            const grid = document.getElementById('user-table');
+
+            try {
+                // আপডেট করা হয়েছে: /mess-members/ এর আগে /api/ যোগ করা হয়েছে
+                const res = await fetch(`${BASE_URL}/api/mess-members/${messId}`);
+                if (res.ok) {
+                    const members = await res.json();
+
+                    // members[0] থেকে মেসের নামটা নিয়ে হেডারে বসানো
+                    if (members.length > 0) {
+                        document.getElementById('demo1').textContent =`Welcome to `+ members[0].mess_name;
+                    }
+
+                    grid.innerHTML = "";
+                    members.forEach(m => {
+                        const card = document.createElement('div');
+                        card.className = 'member-card';
+                        card.innerHTML = `
+                            <div class="member-pic-wrapper">
+                                <img src="${getFullImageUrl(m.profile_pic, m.username)}" class="member-pic" onerror="this.src='https://ui-avatars.com/api/?name=${m.username}&background=3d3d6e&color=fff'">
+                            </div>
+                            <span class="role-badge">${m.role}</span>
+                            <div class="member-name">${m.username}</div>
+                            <div class="member-id">ID: #${m.id}</div>
+                            <button type="button" class="card_user_button">See ${m.username} </button>
+                        `;
+                        grid.appendChild(card);
+                    });
+                } else {
+                    grid.innerHTML = "<p>No members found.</p>";
+                }
+            } catch (e) {
+                grid.innerHTML = "<p>Server error.</p>";
+            }
+        }
+
+        // fetching todays meal : 
+        async function loadTodayMeals(messId) {
+            const mealBox = document.getElementById('meal-summary');
+            
+            try {
+                // আপডেট করা হয়েছে: /get_today_meal_data এর আগে /api/ যোগ করা হয়েছে
+                const res = await fetch(`${BASE_URL}/api/get_today_meal_data?messId=${messId}`);
+                const data = await res.json();
+                
+                if (data.length > 0) {
+                    let html = '<ul style="list-style: none; padding: 0; text-align: left; font-size: 0.85rem;">';
+                    
+                    // টোটাল কাউন্ট করার জন্য ভেরিয়েবল
+                    let totalLunch = 0;
+                    let totalDinner = 0;
+                    let totalGuest = 0;
+
+                    data.forEach(m => {
+                        const lunch = m.lunch || 0;
+                        const dinner = m.dinner || 0;
+                        const guest = m.guest || 0;
+
+                        // টোটাল যোগ করা (গেস্ট মিলসহ যোগ করতে চাইলে guest যোগ করে দিও)
+                        totalLunch += lunch;
+                        totalDinner += dinner;
+                        totalGuest+=guest;
+
+                        html += `
+                            <li style="margin-bottom: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">
+                                <span style="color:var(--accent-cyan); font-weight:bold;">ID ${m.id} ${m.username}:</span> 
+                                Lunch: ${lunch} ||  Dinner : ${dinner}   ${guest > 0 ? '|| G-' + guest : ''}
+                            </li>`;
+                    });
+                    html += '</ul>';
+
+                    // নিচে টোটাল সেকশন যোগ করা
+                    html += `
+                        <div style="margin-top: 15px; padding: 10px; background: rgba(0, 255, 255, 0.1); border-radius: 8px; border: 1px dashed var(--accent-cyan);">
+                            <strong style="color: var(--accent-cyan); display: block; margin-bottom: 5px;">Total Summary:</strong>
+                            <div style="display: flex; justify-content: space-evenly; font-weight: bold;">
+                                <span>Lunch: ${totalLunch}</span>
+                                <span>Dinner: ${totalDinner}</span>   
+                                <span style="color: #ff9f43;">Guests: ${totalGuest}</span>
+                            </div>
+                            <div style="text-align: center; margin-top: 5px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;">
+                                Total Meals: ${totalLunch + totalDinner + totalGuest}
+                            </div>
+                        </div>
+                    `;
+
+                    mealBox.innerHTML = html;
+                } else {
+                    mealBox.innerHTML = "No data for today's Meal।";
+                }
+            } catch (error) {
+                mealBox.innerHTML = "Error loading meals.";
+            }
+        }
+
+        // showing meal rate : 
+        // উদাহরন
+        async function showing_mealrate(messId) {
+            // এটিতে আগে থেকেই /api/ ছিল, তাই কোন পরিবর্তন করা হয়নি
+            const res = await fetch(`${BASE_URL}/api/get_mealrate?messId=${messId}`);
+            const data = await res.json();
+            console.log(data);
+            
+            document.getElementById('total-bazar').innerText = `${data.totalBazar} TK`;
+            document.getElementById('total-meals-count').innerText = data.totalMeals;
+            document.getElementById('meal-rate').innerText = `${data.mealRate} TK`;
+        }
+        
+    </script>
+</body>
+</html>

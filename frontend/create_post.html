@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        :root {
+            --bg-dark: #0f0c29; --sidebar-bg: #161625; --card-bg: #1e1e3f;
+            --accent-cyan: #00d1ff; --accent-pink: #ff79c6; --accent-yellow: #f1fa8c;
+            --text-main: #e6e6ef; --text-dim: #a0a0c0; --border-color: #3d3d6e;
+            --header-gradient: linear-gradient(90deg, #ff79c6 0%, #bd93f9 50%, #00d1ff 100%);
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', sans-serif;
+            overflow-x: hidden;
+            /* ইউনিক মোশন ব্যাকগ্রাউন্ড */
+            background: radial-gradient(circle at 50% 50%, #1e1e3f 0%, #0f0c29 100%);
+        }
+
+        /* এনিমেটেড ব্যাকগ্রাউন্ড ইফেক্ট */
+        body::before {
+            content: "";
+            position: fixed;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(0,209,255,0.05) 0%, transparent 50%);
+            animation: moveBg 20s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes moveBg {
+            0% { transform: translate(0, 0); }
+            50% { transform: translate(5%, 5%); }
+            100% { transform: translate(0, 0); }
+        }
+
+        .container { max-width: 800px; margin: 50px auto; padding: 20px; }
+
+        .glass-card {
+            background: rgba(30, 30, 63, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            
+        }
+        .text{
+            display:flex;
+            align-items: center;
+
+        }
+
+        h2 { background: var(--header-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
+
+        .type-selector { display: flex; gap: 15px; margin: 20px 0; }
+        .type-btn {
+            flex: 1; padding: 15px; border: 1px solid var(--border-color);
+            background: var(--sidebar-bg); color: var(--text-main);
+            border-radius: 12px; cursor: pointer; transition: 0.3s;
+        }
+        .type-btn:hover, .type-btn.active { border-color: var(--accent-cyan); background: var(--active-bg); box-shadow: 0 0 15px var(--accent-cyan); }
+
+        /* Modal / Popup Styling */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;
+        }
+        .modal-content { width: 450px; background: var(--card-bg); border-radius: 20px; padding: 20px; border: 1px solid var(--accent-pink); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="glass-card">
+        <div  class="text">
+            <h3>📝</h3><h2> Create New Post</h2>
+        </div>
+        <p>Select Post Type:</p>
+        <div class="type-selector">
+            <button class="type-btn" onclick="setType('rent')">🏠 Rent</button>
+            <button class="type-btn" onclick="setType('sale')">💰 sale</button>
+            <button class="type-btn" onclick="setType('other')">✨ Other</button>
+        </div>
+
+        <form id="postForm">
+            <input type="text" id="title" placeholder="Post Title" style="width:100%; padding:12px; background:var(--sidebar-bg); border:1px solid var(--border-color); color:white; border-radius:8px; margin-bottom:15px;">
+            <textarea id="desc" placeholder="Details..." style="width:100%; height:100px; background:var(--sidebar-bg); border:1px solid var(--border-color); color:white; border-radius:8px;"></textarea>
+            
+            <div id="priceDiv" style="display:none; margin-top:15px;">
+                <input type="number" id="price" placeholder="Amount (BDT)" min="0" oninput="if(this.value < 0) this.value = 0;" style="width:100%; padding:12px; background:var(--sidebar-bg); border:1px solid var(--border-color); color:var(--accent-yellow); border-radius:8px;">
+            </div>
+
+            <div style="margin-top:15px;">
+                <input type="file" id="imageInput" accept="image/*" style="color:var(--text-dim);">
+            </div>
+
+            <button type="button" onclick="showPreview()" style="margin-top:20px; width:100%; padding:15px; background:var(--header-gradient); border:none; border-radius:12px; color:white; font-weight:bold; cursor:pointer;">Preview Post</button>
+        </form>
+    </div>
+</div>
+
+<div id="previewModal" class="modal">
+    <div class="modal-content">
+        <h4 style="color:var(--accent-pink)">👀 Post Preview</h4>
+        <hr border-color="var(--border-color)">
+        <div id="previewArea" class="post-card">
+            </div>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button onclick="closeModal()" style="flex:1; padding:10px; border-radius:8px; background:transparent; border:1px solid var(--text-dim); color:white;">Edit</button>
+            <button onclick="submitToDB()" style="flex:1; padding:10px; border-radius:8px; background:var(--accent-cyan); border:none; color:var(--bg-dark); font-weight:bold;">Yes, I Submit 🚀</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedType = 'other';
+    const api_base = "http://localhost:8000"
+
+    // ১. টাইপ সিলেক্ট করার লজিক
+    function setType(type) {
+        selectedType = type;
+        // সব বাটন থেকে active ক্লাস সরানো
+        document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
+        // প্রাইস বক্স শো/হাইড করা
+        document.getElementById('priceDiv').style.display = (type === 'other') ? 'none' : 'block';
+    }
+
+    // ২. প্রিভিউ দেখানোর মেইন ফাংশন
+    function showPreview() {
+        const title = document.getElementById('title').value;
+        const price = document.getElementById('price').value;
+        const desc = document.getElementById('desc').value;
+        const imageInput = document.getElementById('imageInput');
+        const previewArea = document.getElementById('previewArea');
+    
+        previewArea.innerHTML = `
+            <h3 style="color:var(--accent-cyan); margin-bottom:5px;">${title}</h3>
+            <p style="font-size:12px; color:var(--accent-pink); margin-bottom:10px;">Category: ${selectedType.toUpperCase()}</p>
+            ${price ? `<h4 style="color:var(--accent-yellow); margin-bottom:10px;">Price: ${price} BDT</h4>` : ''}
+            <p style="color:var(--text-dim); line-height:1.5;">${desc}</p>
+        `;
+
+        // ৩. ছবি প্রিভিউ করার লজিক (এটি ফাংশনের ভেতরেই থাকবে)
+        if (imageInput.files && imageInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imgElement = document.createElement('img');
+                imgElement.src = e.target.result;
+                imgElement.style.width = '100%';
+                imgElement.style.height = '200px';
+                imgElement.style.objectFit = 'cover';
+                imgElement.style.borderRadius = '10px';
+                imgElement.style.marginTop = '15px';
+                imgElement.style.border = '1px solid var(--border-color)';
+                previewArea.appendChild(imgElement);
+            }
+            reader.readAsDataURL(imageInput.files[0]);
+        }
+
+        // মোডাল ওপেন করা
+        document.getElementById('previewModal').style.display = 'flex';
+    }
+
+    // ৪. মোডাল বন্ধ করা
+    function closeModal() { 
+        document.getElementById('previewModal').style.display = 'none'; 
+    }
+
+    // ৫. ডাটাবেসে সাবমিট করা
+    async function submitToDB() {
+        // ১. ফর্ম এলিমেন্ট সিলেক্ট করা
+        const form = document.getElementById("postForm");
+        
+        // ২. লোকাল স্টোরেজ থেকে ইউজারের আইডি নেওয়া
+        const userId = localStorage.getItem("userId");
+        const messId = localStorage.getItem("messId");
+
+        // ৩. FormData তৈরি করা (ছবি পাঠানোর জন্য এটিই সেরা)
+        const formData = new FormData();
+        
+        // ৪. তোমার সিলেকশন থেকে ডাটাগুলো ফর্মে অ্যাড করা
+        // pic upload ar jonno data gula avabe nite hosse .. nahole photo database aa save hbe na...
+        formData.append('user_id', userId);
+        formData.append('mess_id', messId);
+        formData.append('post_type', selectedType); // তোমার গ্লোবাল ভেরিয়েবল
+        formData.append('title', document.getElementById('title').value);
+        formData.append('description', document.getElementById('desc').value);
+        formData.append('price', document.getElementById('price').value || 0);
+        
+        // ছবি ইনপুট ফিল্ড থেকে ছবিটা নেওয়া
+        const imageFile = document.getElementById('imageInput').files[0];
+        if (imageFile) {
+            formData.append('post_image', imageFile);
+        }
+
+        // ৫. এপিআই কল (Fetch) - একদম তোমার আগের স্টাইলে
+        try {
+            // আপডেট করা হয়েছে: /api/ যুক্ত করা হলো
+            const response = await fetch(`${api_base}/api/create-posts`, {
+                method: "POST",
+                // মনে রেখো: FormData ব্যবহার করলে "Content-Type" হেডার দেওয়ার দরকার নেই
+                body: formData 
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert("congratulations !! your post has been created successfully!! 🚀");
+                window.location.href = "./user.html"; // তোমার ড্যাশবোর্ড পেজ
+            } else {
+                alert(result.error || "An error is happening.");
+            }
+        } catch (error) {
+            console.error("Full Error Object:", error); // এটি কনসোলে দেখো
+            alert("Error Details: " + error.message); 
+        }
+        
+        closeModal(); // প্রিভিউ পপ-আপ বন্ধ করা
+    };
+</script>
+
+</body>
+</html>

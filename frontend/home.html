@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mess Management - Premium Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* তোমার দেওয়া রুট ভেরিয়েবল */
+        /* ১. কালার ভেরিয়েবল এবং রুট সেটআপ */
+        /* ১. গ্লোবাল সেটআপ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        :root {
+            --bg-dark: #0f0c29;         
+            --sidebar-bg: #161625;      
+            --card-bg: #1e1e3f;         
+            --accent-cyan: #00d1ff;     
+            --accent-pink: #ff79c6;     
+            --accent-yellow: #f1fa8c;   
+            --text-main: #e6e6ef;       
+            --text-dim: #a0a0c0;         
+            --border-color: #3d3d6e;    
+            --active-bg: rgba(0, 209, 255, 0.1);
+            --header-gradient: linear-gradient(90deg, #ff79c6 0%, #bd93f9 50%, #00d1ff 100%);
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* ২. নেভিগেশন বার (Modern Dark Look) */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 8%;
+            background: var(--sidebar-bg);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: var(--text-main);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo span.m-box {
+            background: var(--accent-cyan);
+            color: var(--bg-dark);
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-weight: 900;
+            box-shadow: 0 0 15px var(--accent-cyan);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 25px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-cyan);
+        }
+
+        /* ৩. হিরো সেকশন */
+        .hero {
+            padding: 100px 20px;
+            text-align: center;
+            background: linear-gradient(to bottom, var(--bg-dark), #16162d);
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            background: var(--header-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            color: var(--text-dim);
+            max-width: 700px;
+            margin: 0 auto;
+            font-size: 1.1rem;
+        }
+
+        /* ৪. মেস গ্রিড ও কার্ড (সংশোধিত সাইজ) */
+        .mess-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
+            gap: 30px;
+            padding: 50px 8%;
+            justify-content: center;
+        }
+
+        .mess-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 25px;
+            transition: 0.4s;
+            text-align: center;
+        }
+
+        .mess-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 10px 30px rgba(0, 209, 255, 0.1);
+        }
+
+        /* ইমেজের নিওন বর্ডার */
+        .card-img-wrapper {
+            width: 110px;
+            height: 110px;
+            margin: 0 auto 15px;
+            border-radius: 50%;
+            border: 3px solid var(--border-color);
+            overflow: hidden;
+            transition: 0.4s;
+        }
+
+        .mess-card:hover .card-img-wrapper {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px var(--accent-cyan);
+        }
+
+        .card-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* বাটন স্টাইল */
+        .btn-request {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            background: var(--header-gradient);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-request:hover {
+            filter: brightness(1.2);
+            box-shadow: 0 5px 15px rgba(255, 121, 198, 0.4);
+        }
+
+        /* Navigation and header part :  */
+        
+        /* ২. মেইন গ্রিড লেআউট */  
+        /* from here you will see the mess grid :  */
+        .mess-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 320px)); 
+            gap: 30px;
+            padding: 40px;
+            justify-content: center;
+            background-color: var(--bg-dark);
+        }
+
+        /* ৩. কার্ড ডিজাইন */
+        .mess-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .mess-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(0, 209, 255, 0.2);
+        }
+
+        /* ৪. ইমেজ ডিজাইন (৩px বর্ডার এবং হোভার গ্লো) */
+        .card-img-wrapper {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            background: transparent; /* নরমাল অবস্থায় কোনো কালার থাকবে না */
+        }
+
+        .card-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            /* তোমার রিকোয়েস্ট অনুযায়ী ৩ পিক্সেল সলিড বর্ডার */
+            border: 3px solid var(--border-color); 
+            transition: all 0.4s ease;
+        }
+
+        /* ইমেজে হোভার করলে লাইটিং ইফেক্ট */
+        .card-img-wrapper:hover {
+            transform: scale(1.1);
+        }
+
+        .card-img-wrapper:hover img {
+            border-color: var(--accent-cyan);
+            /* নিওন গ্লো ইফেক্ট */
+            box-shadow: 0 0 15px var(--accent-cyan), 0 0 30px var(--accent-pink);
+        }
+
+        /* ৫. টেক্সট এবং ব্যাজ স্টাইল */
+        .admin-badge {
+            display: inline-block;
+            background: rgba(241, 250, 140, 0.1);
+            color: var(--accent-yellow);
+            border: 1px solid var(--accent-yellow);
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .mess-card h2 {
+            color: var(--text-main);
+            font-size: 1.4rem;
+            margin: 15px 0 5px;
+        }
+
+        .location-badge {
+            color: var(--accent-yellow);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .member-info {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            margin: 10px 0;
+        }
+
+        .member-info span {
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+
+        .admin-name {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+
+        .admin-name span {
+            color: var(--accent-pink);
+            font-weight: 600;
+        }
+
+        /* ৬. বাটন স্টাইল */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-details {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .btn-details:hover {
+            background: var(--active-bg);
+            border-color: var(--accent-cyan);
+        }
+
+        .btn-request {
+            background: var(--header-gradient);
+            border: none;
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(189, 147, 249, 0.3);
+        }
+
+        .btn-request:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(0, 209, 255, 0.4);
+        }
+
+        /* here mess grid ends :  */
+
+        /* কন্টেইনার সেটআপ */
+        /* --- Register Mess Section --- */
+        
+        .form-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            padding: 50px 40px;
+            max-width: 650px;
+            margin: 80px auto;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ফর্মের গ্লোয়িং বর্ডার ইফেক্ট */
+        .form-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 209, 255, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .form-title {
+            font-size: 2.2rem;
+            color: var(--text-main);
+            text-align: center;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .form-title span {
+            background: var(--header-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-subtitle {
+            color: var(--text-dim);
+            text-align: center;
+            font-size: 0.95rem;
+            margin-bottom: 40px;
+            line-height: 1.5;
+        }
+
+        /* ইনপুট বক্সকে কার্ডের মতো প্রিমিয়াম করা */
+        .input-box {
+            width: 100%;
+            background: rgba(15, 12, 41, 0.7);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 16px 20px;
+            margin-bottom: 25px;
+            color: var(--text-main);
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-box:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px rgba(0, 209, 255, 0.3);
+            background: var(--bg-dark);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 20px;
+        }
+
+        /* ফাইল আপলোড কাস্টম স্টাইল */
+        .file-upload-container {
+            background: rgba(255, 121, 198, 0.05);
+            border: 2px dashed var(--border-color);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: 0.3s;
+        }
+
+        .file-upload-container:hover {
+            border-color: var(--accent-pink);
+        }
+
+        .file-upload-container label {
+            display: block;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        /* মেইন রেজিস্টার বাটন (কার্ডের মতো গ্লোয়িং) */
+         /* বাটন ডিজাইন - প্রিমিয়াম নিওন লুক */
+        .btn-register {
+            width: 100%;
+            background: var(--header-gradient); /* তোমার সেই পিঙ্ক-সায়ান গ্রেডিয়েন্ট */
+            color: white;
+            padding: 18px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 20px rgba(255, 121, 198, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        /* হোভার করলে যে ম্যাজিকটা হবে */
+        .btn-register:hover {
+            transform: translateY(-5px) scale(1.02); /* একটু উপরে উঠবে আর বড় হবে */
+            box-shadow: 0 15px 30px rgba(0, 209, 255, 0.4); /* সায়ান কালারের গ্লো বেড়ে যাবে */
+            filter: brightness(1.1); /* রংটা আরও উজ্জ্বল হবে */
+            letter-spacing: 2px; /* লেখাটা একটু ছড়িয়ে যাবে, যা দেখতে কুল লাগে */
+        }
+
+        /* ক্লিক করার মুহূর্তের ইফেক্ট */
+        .btn-register:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        /* mobile responsiveness :  */
+        /* --- Responsive Navigation --- */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            gap: 5px;
+        }
+
+        .menu-toggle .bar {
+            width: 25px;
+            height: 3px;
+            background-color: var(--text-main);
+            transition: 0.3s;
+            border-radius: 5px;
+        }
+
+        /* --- Media Queries --- */
+
+        /* মোবাইল এবং ট্যাবলেট (992px এর নিচে) */
+        @media (max-width: 992px) {
+            .navbar {
+                padding: 15px 5%;
+            }
+
+            .menu-toggle {
+                display: flex; /* মোবাইল মেনু শো হবে */
+            }
+
+            .nav-links {
+                position: fixed;
+                left: -100%;
+                top: 70px;
+                flex-direction: column;
+                background: var(--sidebar-bg);
+                width: 100%;
+                text-align: center;
+                transition: 0.4s;
+                padding: 40px 0;
+                border-bottom: 2px solid var(--border-color);
+                box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            }
+
+            .nav-links.active {
+                left: 0; /* মেনু স্লাইড ইন */
+            }
+
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+        }
+
+        /* মোবাইল স্পেসিফিক (600px এর নিচে) */
+        @media (max-width: 600px) {
+            .input-row {
+                flex-direction: column; /* ইনপুট বক্স নিচে নিচে আসবে */
+                gap: 0;
+            }
+
+            .form-section {
+                margin: 40px 15px;
+                padding: 30px 20px;
+            }
+
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .hero-btns {
+                flex-direction: column;
+                padding: 0 30px;
+            }
+        }
+
+        /* হ্যামবার্গার মেনু অ্যানিমেশন */
+        #mobile-menu.is-active .bar:nth-child(2) { opacity: 0; }
+        #mobile-menu.is-active .bar:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+        #mobile-menu.is-active .bar:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+        /* Home page ar upor ar 2 ta button ar styling :  */
+
+        .hero-btns {
+            display: flex;
+            justify-content: center; /* বাটনগুলোকে মাঝখানে রাখার জন্য */
+            gap: 20px;               /* বাটন দুটির মাঝখানের ফাঁকা জায়গা */
+            margin-top: 30px;
+        }
+
+        /* কমন বাটন স্টাইল */
+        .btn-primary_2, .btn-secondary_2 {
+            padding: 12px 30px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.4s ease;
+            border: 2px solid var(--accent-pink); /* বর্ডারটা তোমার সেই পিঙ্ক কালার */
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        /* Explore Messes (শুরুতে বর্ডার থাকবে, ব্যাকগ্রাউন্ড ট্রান্সপারেন্ট) */
+        .btn-primary_2 {
+            background: transparent;
+            color: var(--accent-pink);
+        }
+
+        .btn-primary_2:hover {
+            background: var(--accent-pink);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(255, 121, 198, 0.4); /* গ্লোয়িং ইফেক্ট */
+            transform: translateY(-3px);
+        }
+
+        /* Get Started (শুরুতে এটাকেও তুমি চাইলে ট্রান্সপারেন্ট রাখতে পারো বা সায়ান কালার দিতে পারো) */
+        .btn-secondary_2 {
+            background: transparent;
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+        }
+
+        .btn-secondary_2:hover {
+            background: var(--accent-cyan);
+            color: #0f0c29; /* ডার্ক ব্যাকগ্রাউন্ডে সায়ান টেক্সট */
+            box-shadow: 0 0 20px rgba(0, 209, 255, 0.4);
+            transform: translateY(-3px);
+        }
+
+        /* মোবাইল রেসপন্সিভনেস */
+        @media (max-width: 480px) {
+            .hero-btns {
+                flex-direction: column; /* মোবাইলে একটার নিচে একটা আসবে */
+                align-items: center;
+            }
+            .btn-primary_2, .btn-secondary_2 {
+                width: 80%;
+                text-align: center;
+            }
+        }
+        
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="#" class="logo">
+            <span class="m-box">M</span> BazarFlow
+        </a>
+        
+        <div class="menu-toggle" id="mobile-menu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </div>
+
+        <div class="nav-links" id="nav-links">
+            <a href="#mess-list" class="nav-item">Mess List</a>
+            <a href="#create-mess" class="nav-item">Register Mess</a>
+            <a href="#" class="nav-item">About Us</a>
+            <div id="navActionArea"></div>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <h1>Simplify Your <span>Mess Life</span></h1>
+            <p>Your Mess , Bazar system , and Meal Management  ; All in a row. Please log in or register </p>
+            <div class="hero-btns">
+                <a href="#mess-container" class="btn-primary_2">Explore Messes</a>
+                <a href="#create-mess" class="btn-secondary_2">Get Started</a>
+            </div>
+        </div>
+    </header>
+
+
+    <div id="mess-container" class="mess-grid">  </div>
+
+
+    <div class="container" id="create-mess">
+        <div class="form-section">
+            <h2 style="text-align: center; color: var(--accent-green); margin-bottom: 30px;">Launch Your Own Mess</h2>
+            <p style="text-align: center; color: #aaa; margin-top: -20px; margin-bottom: 30px; font-size: 0.9rem;">Please fill up the form below and you will be the admin of your mess !!</p>
+            
+            <form id="messForm" enctype="multipart/form-data">
+                <input type="text" class="input-box" id="mess_name" placeholder="Mess Name (i.e : Dhurvotara)" required>
+                
+                <div style="display: flex; gap: 20px;">
+                    <input type="number" class="input-box" id="total_seats" placeholder="Total Seats (যেমন: 6)" required>
+                    <input type="text" class="input-box" id="location" placeholder="Location (e.g. Mirpur-10)">
+                </div>
+
+                <div class="file-upload" style="margin-bottom: 15px;">
+                    <label for="mess_image" style="display: block; margin-bottom: 5px; color: #555;">Please upload a Mess pic:</label>
+                    <input type="file" class="input-box" id="mess_image" accept="image/*">
+                </div>
+                
+                <button type="submit" class="btn-action btn-register">🚀 Register & Become Admin</button>
+            </form>
+
+        </div>
+    </div>
+
+    <script>
+
+        // for mobile responsive ness : 
+        const mobileMenu = document.querySelector('#mobile-menu');
+        const navLinks = document.querySelector('.nav-links');
+
+        mobileMenu.addEventListener('click', () => {
+            mobileMenu.classList.toggle('is-active');
+            navLinks.classList.toggle('active');
+        });
+
+        // মেনু আইটেমে ক্লিক করলে মেনু বন্ধ হয়ে যাবে (Smooth Scroll এর জন্য)
+        document.querySelectorAll('.nav-item').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.remove('is-active');
+                navLinks.classList.remove('active');
+            });
+        });
+
+        // ১. মেস তৈরি করার লজিক (Admin Registration)
+        document.getElementById('messForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                alert("You need to be logged in first to create a mess !");
+                location.href = './login.html';
+                return;
+            }
+
+            // গুরুত্বপূর্ণ: ফাইল পাঠানোর জন্য FormData ব্যবহার করতে হবে
+            const formData = new FormData();
+            formData.append('mess_name', document.getElementById('mess_name').value);
+            formData.append('total_seats', document.getElementById('total_seats').value);
+            formData.append('location', document.getElementById('location').value);
+            formData.append('user_id', userId);
+
+            // ফাইল ইনপুট থেকে ইমেজ ফাইলটি ধরছি
+            const imageFile = document.getElementById('mess_image').files[0];
+            if (imageFile) {
+                formData.append('post_image', imageFile); // 'mess_image' কি নাম দিচ্ছ সেটা ব্যাকএন্ডের Multer-এর সাথে মিল থাকতে হবে
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/api/create-mess', {
+                    method: 'POST',
+                    // মনে রেখো: FormData ব্যবহার করলে Content-Type হেডার দেওয়ার দরকার নেই, ব্রাউজার নিজে থেকেই সেট করে নেবে
+                    body: formData 
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // লোকাল স্টোরেজে তথ্য আপডেট
+                    localStorage.setItem('role', 'admin');
+                    localStorage.setItem('messId', result.mess_id); 
+                    
+                    alert("COngratulations !! your mess has created !! 🎉");
+                    window.location.href = "./admin.html";
+                } else {
+                    alert("Error: " + result.error);
+                }
+            } catch (error) {
+                console.error("Error creating mess:", error);
+                alert("সার্ভারে সমস্যা হচ্ছে, পরে চেষ্টা করুন।");
+            }
+        });
+
+        async function loadMesses() {
+            try {
+                const response = await fetch('http://localhost:8000/api/all-messes');
+                const messes = await response.json();
+            
+                const container = document.getElementById('mess-container');
+                container.innerHTML = ""; // ক্লিয়ার করা
+
+                messes.forEach(mess => {
+                    // ইমেজ পাথ লজিক (আগের মতোই)
+                    let imageUrl = mess.mess_img ? `http://localhost:8000${mess.mess_img}` : 'default.jpg';
+
+                    container.innerHTML += `
+                        <div class="mess-card">
+                            <div class="card-img-wrapper">
+                                <img src="${imageUrl}" alt="${mess.mess_name}">
+                            </div>
+                            
+                            <div class="admin-badge">ADMIN</div>
+                            <h2>${mess.mess_name}</h2>
+                            
+                            <div class="location-badge">LOCATION: ${mess.location}</div>
+                            
+                            <div class="member-info">
+                                Current Members: <span>${mess.booked_seats}/${mess.total_seats}</span>
+                            </div>
+
+                            <p class="admin-name">Admin: <span>${mess.admin_name || 'Roby'}</span></p>
+                            
+                            <div class="btn-group">
+                                <button onclick="goToDetails(${mess.id})" class="btn-details">View Details</button>
+                                <button onclick="sendJoinRequest(${mess.id}, '${mess.mess_name}', ${mess.admin_id}, this)" class="btn-request">Send Request</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+            } catch (error) {
+                console.error("Facing problem to load mess !!", error);
+            }
+        }
+
+        // পেজ লোড হলে ফাংশনটি কল হবে
+        loadMesses();
+
+        // for view_details function : if view_details button clicks , it will take the user to this page:
+        function goToDetails(messId) {
+            // এটি ইউজারকে mess_details.html পেজে নিয়ে যাবে এবং URL-এ আইডি পাস করবে
+            window.location.href = `./mess_view.html?id=${messId}`;
+        }
+
+        // ১. রিকোয়েস্ট পাঠানোর ফাংশন
+        async function sendJoinRequest(messId, messName, adminId, btn) {
+            const userId = Number(localStorage.getItem('userId'));
+            const aId = Number(adminId);
+            if(!userId){
+                alert("Please log in to send a request!!");
+                window.location.href = "./login.html";
+                return;
+            }
+
+            if (userId === aId) {
+                alert("You are the admin !! you already been the member of the mess !!");
+                return;
+            }
+
+            try {
+                btn.disabled = true;
+                btn.innerText = "Processing...";
+
+                const response = await fetch('http://localhost:8000/api/join-request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, mess_id: messId })
+                });
+
+                if (response.ok) {
+                    // ডাইনামিক পরিবর্তন: বাটনটি ক্যান্সেল বাটনে রূপান্তর করা
+                    alert(`Request has sent successfully !!`);
+                    btn.disabled = false;
+                    btn.innerText = "Cancel Request";
+                    btn.style.background = "linear-gradient(90deg, #ff4b2b 0%, #ff416c 100%)"; // লাল গ্রেডিয়েন্ট
+                    btn.setAttribute("onclick", `cancelJoinRequest(${messId}, '${messName}', ${adminId}, this)`);
+                } else {
+                    const result = await response.json();
+                    alert(result.error);
+                    btn.disabled = false;
+                    btn.innerText = "Send Request";
+                }
+            } catch (error) {
+                alert("Server Error!");
+                btn.disabled = false;
+            }
+        }
+
+        // ২. রিকোয়েস্ট বাতিল করার ফাংশন
+        async function cancelJoinRequest(messId, messName, adminId, btn) {
+            const userId = localStorage.getItem('userId');
+            if (!confirm("Are you sure you want to cancel?")) return;
+
+            try {
+                btn.disabled = true;
+                btn.innerText = "Cancelling...";
+
+                // URL-এর সাথেই userId এবং messId পাঠিয়ে দিচ্ছি
+                const response = await fetch(`http://localhost:8000/api/cancel-request/${userId}/${messId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(result.message);
+                    // বাটন আগের অবস্থায় ফেরত
+                    btn.disabled = false;
+                    btn.innerText = "Send Request";
+                    btn.style.background = "var(--header-gradient)"; 
+                    btn.setAttribute("onclick", `sendJoinRequest(${messId}, '${messName}', ${adminId}, this)`);
+                } else {
+                    alert(result.error || "Failed to cancel");
+                    btn.disabled = false;
+                    btn.innerText = "Cancel Request";
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Server Error! Check console.");
+                btn.disabled = false;
+                btn.innerText = "Cancel Request";
+            }
+        }
+
+        function updateNavbar() {
+            const userId = localStorage.getItem('userId');
+            const role = localStorage.getItem("role");
+            const actionArea = document.getElementById('navActionArea');
+
+            if (userId) {
+                // ইউজার লগইন করা থাকলে Dashboard বাটন দেখাবে
+                if(role==="admin"){
+                    actionArea.innerHTML = `
+                        <a href="./admin.html" class="btn-primary" style="text-decoration: none; padding: 10px 20px; background: var(--accent-cyan); color: var(--bg-dark); border-radius: 20px; font-weight: 600;">
+                            Go to Dashboard
+                        </a>`;
+                }
+                else{
+                    actionArea.innerHTML = `
+                    <a href="./user.html" class="btn-primary" style="text-decoration: none; padding: 10px 20px; background: var(--accent-cyan); color: var(--bg-dark); border-radius: 20px; font-weight: 600;">
+                        Go to Dashboard
+                    </a>`;
+                }
+                
+            } else {
+                // লগইন করা না থাকলে Login বাটন দেখাবে
+                actionArea.innerHTML = `
+                    <a href="./login.html" class="logout-btn" style="text-decoration: none; padding: 10px 20px; border: 1px solid var(--accent-pink); color: var(--accent-pink); border-radius: 20px; font-weight: 600;">
+                        Login
+                    </a>
+                `;
+            }
+        }
+
+        window.onload = function() {
+            updateNavbar();
+        };
+</script>
+</body>
+</html>
