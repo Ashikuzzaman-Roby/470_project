@@ -637,6 +637,7 @@
         <section id="bazarInputSection">
             <div class="content-layout">
                 <div class="card">
+                    <!-- Meal tracking form: users track daily lunch/dinner and guest meals -->
                     <h1>🍱 Meal Management</h1>
                     <label style="font-size: 0.8rem; color: var(--accent-cyan);">Select Date</label>
                     <input type="date" id="mealDate">
@@ -867,6 +868,7 @@
                 console.error("Membership check failed:", error);
             }
             
+            // Initialize meal and bazar date inputs to today
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('mealDate').value = today;
             document.getElementById('bazarDate').value = today;
@@ -954,6 +956,7 @@
         }
 
         // ৪. মিল রিভিউ
+        // Collects meal data (lunch, dinner, guest count) and sends to server for tracking
         function reviewMeal() {
             const date = document.getElementById('mealDate').value;
             if (!date) return alert("Please select a date first!");

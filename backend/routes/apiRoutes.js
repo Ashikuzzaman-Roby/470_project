@@ -41,6 +41,7 @@ router.get('/my-bazar/:userId', mainController.my_bazar);
 router.get('/total-bazar', mainController.total_bazar);
 
 // ================== Meal Segment ==================
+// Route to save user meal records (lunch, dinner, guest count)
 router.post('/input_meal', mainController.input_meal);
 
 // ======== Mess Creation and Management ========
@@ -51,7 +52,9 @@ router.get('/all-messes', mainController.get_all_messes);
 router.get('/find_mess_member', mainController.find_mess_member);
 
 // ================== Mess Interface ==================
+// Fetch all meal records for a specific date and mess
 router.get('/get_today_meal_data', mainController.get_today_meal_data);
+// Calculate meal rate: total bazar cost divided by total meals for current month
 router.get('/get_mealrate', mainController.get_mealrate);
 
 // ================== User History & Booking ==================

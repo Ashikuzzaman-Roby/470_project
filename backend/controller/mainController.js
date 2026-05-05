@@ -111,6 +111,7 @@ exports.total_bazar = async (req, res) => {
 };
 
 // function 08 :
+// Store daily meal tracking record (lunch/dinner status and guest meals)
 exports.input_meal = async (req, res) => {
     const { user_id, date, lunch, dinner, guest } = req.body;
     if (!user_id || !date) return res.status(400).json({ status: "Invalid request. Please provide user_id and date." });
@@ -206,9 +207,10 @@ exports.find_mess_member = async (req, res) => {
 };
 
 // function 14 :
+// Retrieves all meal records for a given date and mess for admin dashboard
 exports.get_today_meal_data = async (req, res) => {
     try {
-        const today = new Date().toISOString().split('T')[0]; 
+        const today = new Date().toISOString().split('T')[0];
         const messId = req.query.messId;
         const [rows] = await userModel.res14(today, messId);
         if (rows.length > 0) res.status(200).json(rows);
@@ -220,6 +222,7 @@ exports.get_today_meal_data = async (req, res) => {
 };
 
 // function 15 :
+// Calculates current month meal rate: total bazar / total meals per user
 exports.get_mealrate = async (req, res) => {
     try {
         const messId = parseInt(req.query.messId);
@@ -292,6 +295,7 @@ exports.get_bookings = async (req, res) => {
 };
 
 // function 18 :
+// Computes user's meal statistics: total meals, meal rate, and cost for current month
 exports.get_user_meal_summary = async (req, res) => {
     const userId = req.params.userId;
     const currentMonth = new Date().toISOString().slice(0, 7);
