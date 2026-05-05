@@ -32,12 +32,19 @@ const profileStorage = multer.diskStorage({
 const uploadProfile = multer({ storage: profileStorage, limits: { fileSize: 100 * 1024 * 1024 } });
 
 // ================== Bazar Segment ==================
+// User submits bazar expense request awaiting admin approval
 router.post('/submit-bazar', mainController.submit_bazar);
+// Retrieve pending bazar requests for admin dashboard
 router.get('/get-pending-bazar/:messId', mainController.get_pending_bazar);
+// Admin approves bazar and moves to permanent logs
 router.post('/approve-bazar', mainController.approve_bazar);
+// Admin rejects and removes bazar request
 router.delete('/reject-bazar/:id', mainController.reject_bazar);
+// Admin directly add bazar to logs (bypasses approval)
 router.post('/add-bazar', mainController.add_bazar);
+// Fetch user's bazar history
 router.get('/my-bazar/:userId', mainController.my_bazar);
+// Get all bazar records with user details
 router.get('/total-bazar', mainController.total_bazar);
 
 // ================== Meal Segment ==================

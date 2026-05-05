@@ -2,24 +2,31 @@ const db = require('../config/db'); // db ফাইলের পাথ ঠিক
 
 const userModel = {
     // ================== Bazar Segment ==================
+    // Insert user's bazar expense request into pending queue
     res1: async (user_id, messId, username, bazar_date, itemsString, total_price) => {
         return await db.query("INSERT INTO pending_bazar (user_id, mess_id, username, bazar_date, items, total_price) VALUES (?, ?, ?, ?, ?, ?)", [user_id, messId, username, bazar_date, itemsString, total_price]);
     },
+    // Get all pending bazar requests for a mess
     res2: async (messId) => {
         return await db.query("SELECT * FROM pending_bazar WHERE mess_id = ? AND status = 'pending'", [messId]);
     },
+    // Move approved bazar request to permanent logs
     res3: async (user_id, mess_id, bazar_date, items, total_price) => {
         return await db.query("INSERT INTO bazar_logs (user_id, mess_id, bazar_date, items, total_price) VALUES (?, ?, ?, ?, ?)", [user_id, mess_id, bazar_date, items, total_price]);
     },
+    // Remove bazar from pending queue (approve/reject)
     res4: async (id) => {
         return await db.query("DELETE FROM pending_bazar WHERE id = ?", [id]);
     },
+    // Admin directly insert bazar expense to logs
     res5: async (user_id, messId, bazar_date, itemsString, total_price) => {
         return await db.query("INSERT INTO bazar_logs (user_id, mess_id, bazar_date, items, total_price) VALUES (?, ?, ?, ?, ?)", [user_id, messId, bazar_date, itemsString, total_price]);
     },
+    // Retrieve user's bazar transaction history
     res6: async (userId) => {
         return await db.query("SELECT * FROM bazar_logs WHERE user_id = ? ORDER BY bazar_date DESC", [userId]);
     },
+    // Fetch all bazar records with username joined from users table
     res7: async () => {
         return await db.query("SELECT b.*, u.username FROM bazar_logs b JOIN users u ON b.user_id = u.id ORDER BY b.bazar_date DESC");
     },

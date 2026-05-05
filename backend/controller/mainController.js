@@ -24,6 +24,7 @@ const userModel = require('../Models/userModel'); // মডেল ইমপো�
 
 
 // function 01 :
+// Create pending bazar expense record awaiting admin verification
 exports.submit_bazar = async (req, res) => {
     const { user_id, messId, username, bazar_date, items, total_price } = req.body;
     const itemsString = Array.isArray(items) ? items.join(', ') : items;
@@ -37,6 +38,7 @@ exports.submit_bazar = async (req, res) => {
 };
 
 // function 02 :
+// Fetch all pending bazar requests for admin review and approval
 exports.get_pending_bazar = async (req, res) => {
     try {
         const [rows] = await userModel.res2(req.params.messId);
@@ -46,8 +48,7 @@ exports.get_pending_bazar = async (req, res) => {
     }
 };
 
-// function 03 :
-exports.approve_bazar = async (req, res) => {
+// function 03 :// Admin approves bazar: moves from pending to permanent logsexports.approve_bazar = async (req, res) => {
     const { id, user_id, mess_id, bazar_date, items, total_price } = req.body;
     try {
         await userModel.res3(user_id, mess_id, bazar_date, items, total_price);
@@ -59,6 +60,7 @@ exports.approve_bazar = async (req, res) => {
 };
 
 // function 04 :
+// Admin rejects bazar: deletes from pending queue
 exports.reject_bazar = async (req, res) => {
     try {
         await userModel.res4(req.params.id);
@@ -69,6 +71,7 @@ exports.reject_bazar = async (req, res) => {
 };
 
 // function 05 :
+// Admin directly inserts bazar expense (bypasses approval workflow)
 exports.add_bazar = async (req, res) => {
     const { user_id, messId, bazar_date, items, total_price } = req.body;
     const itemsString = Array.isArray(items) ? items.join(', ') : items;
@@ -82,6 +85,7 @@ exports.add_bazar = async (req, res) => {
 };
 
 // function 06 :
+// Retrieve user's personal bazar history and expenses
 exports.my_bazar = async (req, res) => {
     const userId = req.params.userId;
     try {
@@ -97,6 +101,7 @@ exports.my_bazar = async (req, res) => {
 };
 
 // function 07 :
+// Fetch complete bazar ledger for all users with usernames
 exports.total_bazar = async (req, res) => {
     try {
         const [results] = await userModel.res7();
