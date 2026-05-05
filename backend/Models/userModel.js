@@ -62,21 +62,26 @@ const userModel = {
     },
 
     // ================== User History & Booking ==================
+    // Insert new rental booking request with pending status
     res16: async (post_id, user_id, start_date, end_date, total_price) => {
         return await db.query("INSERT INTO rental_bookings (post_id, user_id, start_date, end_date, total_price, status) VALUES (?, ?, ?, ?, ?, 'pending')", [post_id, user_id, start_date, end_date, total_price]);
     },
+    // Get all confirmed booking dates for a property
     res17: async (postId) => {
         return await db.query("SELECT start_date, end_date FROM rental_bookings WHERE post_id = ? AND status = 'confirmed'", [postId]);
     },
     res18: async (userId, currentMonthStr) => {
         return await db.query("SELECT SUM(lunch + dinner + guest) AS total FROM meals WHERE user_id = ? AND meal_date LIKE ?", [userId, currentMonthStr]);
     },
+    // Fetch pending rental requests with sender/property/amount info
     res19: async (ownerId) => {
         return await db.query("SELECT rb.id, u.username AS sender_name, NULL AS profile_pic, mp.title AS mess_name, rb.total_price AS amount, rb.status, DATE_FORMAT(rb.start_date, '%d %b') AS start_date, DATE_FORMAT(rb.end_date, '%d %b') AS end_date FROM rental_bookings rb JOIN mess_posts mp ON rb.post_id = mp.id JOIN users u ON rb.user_id = u.id WHERE mp.user_id = ? AND LOWER(rb.status) = 'pending'", [ownerId]);
     },
+    // Update booking status to confirmed/cancelled/rejected
     res20: async (status, bookingId) => {
         return await db.query("UPDATE rental_bookings SET status = ? WHERE id = ?", [status, bookingId]);
     },
+    // Get user's completed/pending rental bookings with post titles
     res21: async (userId) => {
         return await db.query("SELECT mp.title, CONCAT(DATE_FORMAT(rb.start_date, '%d %b'), ' - ', DATE_FORMAT(rb.end_date, '%d %b')) AS dates, rb.total_price AS amount, rb.status FROM rental_bookings rb JOIN mess_posts mp ON rb.post_id = mp.id WHERE rb.user_id = ? ORDER BY rb.created_at DESC", [userId]);
     },
@@ -99,12 +104,15 @@ const userModel = {
     },
 
     // ================== Create Post Manage ==================
+    // Insert new rental/sale/other post with image path
     res27: async (user_id, post_type, title, description, finalPrice, image_path) => {
         return await db.query("INSERT INTO mess_posts (user_id, post_type, title, description, price, image_path) VALUES (?, ?, ?, ?, ?, ?)", [user_id, post_type, title, description, finalPrice, image_path]);
     },
+    // Retrieve all posts with user and mess information
     res28: async () => {
         return await db.query("SELECT mess_posts.*, users.username, messes.mess_name FROM mess_posts JOIN users ON mess_posts.user_id = users.id LEFT JOIN messes ON users.mess_id = messes.id ORDER BY mess_posts.id DESC");
     },
+    // Get specific post details with owner and mess info
     res29: async (postId) => {
         return await db.query("SELECT mess_posts.*, users.username, messes.mess_name FROM mess_posts JOIN users ON mess_posts.user_id = users.id LEFT JOIN messes ON users.mess_id = messes.id WHERE mess_posts.id = ?", [postId]);
     }

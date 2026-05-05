@@ -65,11 +65,16 @@ router.get('/get_today_meal_data', mainController.get_today_meal_data);
 router.get('/get_mealrate', mainController.get_mealrate);
 
 // ================== User History & Booking ==================
+// Create new rental booking request with date range and price
 router.post('/create-booking', mainController.create_booking);
+// Get all booked dates for a specific property
 router.get('/get-bookings/:postId', mainController.get_bookings);
 router.get('/user_meal_summary/:userId', mainController.get_user_meal_summary);
+// Fetch all pending rental requests for property owner
 router.get('/incoming-requests/:userId', mainController.get_incoming_requests);
+// Update booking status: confirm/reject rental request
 router.put('/update-booking-status/:bookingId', mainController.update_booking_status);
+// Get user's booking history with dates and status
 router.get('/user-rental-history/:userId', mainController.get_user_rental_history);
 
 // ================== Admin Part ==================
@@ -80,8 +85,11 @@ router.get('/mess-members/:mess_id', mainController.get_mess_members);
 router.post('/remove-member', mainController.remove_member);
 
 // ================== Create Post Manage & Profile ==================
+// Create rental/sale post with image upload
 router.post('/create-posts', uploadPost.single('post_image'), mainController.create_posts);
+// Retrieve all posts with user and mess details
 router.get('/get-posts', mainController.get_posts);
+// Get specific post details by ID
 router.get('/get-post/:id', mainController.get_post_details);
 
 // প্রোফাইল পিকচার আপলোড

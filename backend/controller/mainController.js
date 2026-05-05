@@ -254,13 +254,13 @@ exports.get_mealrate = async (req, res) => {
 };
 
 // function 16 :
+// Check date conflicts and create rental booking request
 exports.create_booking = async (req, res) => {
     const { post_id, user_id, start_date, end_date, total_price } = req.body;
     if (!post_id || !user_id || !start_date || !end_date) return res.status(400).json({ success: false, message: "All fields are required!" });
     
     try {
-        // কনফ্লিক্ট চেক কুয়েরি মডেলে অ্যাড করে নিও, আপাতত সরাসরি রাখছি
-        const conflictSql = `SELECT id FROM rental_bookings WHERE post_id = ? AND status = 'confirmed' AND ((start_date <= ? AND end_date >= ?))`;
+        // কনফ্লিক্ট চেক কুয়েরি মডেলে অ্যাড করে নিও, আপাতত সরাসরি রাখছি        // Verify date range doesn't overlap with confirmed bookings        const conflictSql = `SELECT id FROM rental_bookings WHERE post_id = ? AND status = 'confirmed' AND ((start_date <= ? AND end_date >= ?))`;
         const [conflicts] = await db.query(conflictSql, [post_id, end_date, start_date]);
         if (conflicts.length > 0) return res.status(400).json({ success: false, message: "❌ Sorry, these dates are already booked!" });
 
@@ -274,6 +274,7 @@ exports.create_booking = async (req, res) => {
 };
 
 // function 17 :
+// Build array of booked dates from confirmed bookings and return as occupiedDates
 exports.get_bookings = async (req, res) => {
     const { postId } = req.params;
     try {
@@ -328,6 +329,8 @@ exports.get_user_meal_summary = async (req, res) => {
 };
 
 // function 19 :
+// function 19 :
+// Fetch all pending rental requests for property owner
 exports.get_incoming_requests = async (req, res) => {
     const ownerId = req.params.userId;
     try {
@@ -339,6 +342,7 @@ exports.get_incoming_requests = async (req, res) => {
 };
 
 // function 20 :
+// Confirm booking and auto-cancel conflicting pending requests
 exports.update_booking_status = async (req, res) => {
     const { bookingId } = req.params;
     const { status } = req.body;
@@ -347,6 +351,7 @@ exports.update_booking_status = async (req, res) => {
             const [currentBooking] = await db.query("SELECT post_id, start_date, end_date FROM rental_bookings WHERE id = ?", [bookingId]);
             if (currentBooking.length > 0) {
                 const { post_id, start_date, end_date } = currentBooking[0];
+                // Auto-cancel conflicting bookings when confirming
                 const cancelSql = `UPDATE rental_bookings SET status = 'cancelled' WHERE post_id = ? AND status = 'pending' AND id != ? AND ((start_date <= ? AND end_date >= ?))`;
                 await db.query(cancelSql, [post_id, bookingId, end_date, start_date]);
             }
@@ -441,8 +446,7 @@ exports.remove_member = async (req, res) => {
     }
 };
 
-// function 27 :
-exports.create_posts = async (req, res) => {
+// function 27 :// Save new post (rent/sale/other) with uploaded image to databaseexports.create_posts = async (req, res) => {
     // এখানে multer upload.single('post_image') রাউটে ব্যবহার করা হয়েছে ধরে নিলাম
     try {
         const { user_id, post_type, title, description, price } = req.body;
@@ -459,6 +463,7 @@ exports.create_posts = async (req, res) => {
 };
 
 // function 28 :
+// Retrieve all posts with user and mess information
 exports.get_posts = async (req, res) => {
     try {
         const [rows] = await userModel.res28();
@@ -470,6 +475,7 @@ exports.get_posts = async (req, res) => {
 };
 
 // function 29 :
+// Get single post details with owner info and mess name
 exports.get_post_details = async (req, res) => {
     const postId = req.params.id;
     try {
