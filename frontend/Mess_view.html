@@ -383,6 +383,7 @@
             return `${BASE_URL}${path.startsWith('/public') ? path : '/public/' + path.replace(/^\/+/, '')}`.replace(/([^:]\/)\/+/g, "$1");
         }
 
+        // Load and display all members of a specific mess
         async function loadMembers(messId) {
             const grid = document.getElementById('user-table');
 

@@ -295,6 +295,7 @@
         }
 
         // --- বাকি মেম্বার লোড ও রিমুভ ফাংশনগুলো আগের মতোই থাকবে ---
+        // Load and display all current mess members with remove button
         async function loadMembers() {
             const messId = localStorage.getItem('messId');
             const grid = document.getElementById('user-table');
@@ -336,6 +337,7 @@
         }
 
         async function handleRemoveMember(userId, messId, userName, memberRole) {
+            // Prevent deletion of admin and remove selected member from mess
             if(memberRole === "admin" || memberRole === "Admin"){
                 alert(`Admin cannot be deleted!`);
                 return;
@@ -362,6 +364,7 @@
         }
 
         async function loadPendingRequests() {
+            // Fetch and display pending join requests from new users
             const messId = localStorage.getItem('messId');
             const container = document.getElementById('request-table-body');
             try {
@@ -386,6 +389,7 @@
         }
 
         async function approveMember(requestId, userId, messId) {
+            // Accept join request and add user to mess members
             // আপডেট করা হয়েছে: /api/ যুক্ত করা হলো
             const res = await fetch(`${BASE_URL}/api/accept-request`, {
                 method: 'POST',
@@ -395,8 +399,7 @@
             if (res.ok) { loadPendingRequests(); loadMembers(); }
         }
 
-        async function rejectMember(requestId) {
-            if (!confirm("Reject this request?")) return;
+        async function rejectMember(requestId) {            // Reject join request and delete from pending requests            if (!confirm("Reject this request?")) return;
             // আপডেট করা হয়েছে: /api/ যুক্ত করা হলো
             const res = await fetch(`${BASE_URL}/api/reject-request/${requestId}`, { method: 'DELETE' });
             if (res.ok) loadPendingRequests();

@@ -782,6 +782,7 @@
         }
 
         // ১. রিকোয়েস্ট পাঠানোর ফাংশন
+        // Send join request to admin for mess membership
         async function sendJoinRequest(messId, messName, adminId, btn) {
             const userId = Number(localStorage.getItem('userId'));
             const aId = Number(adminId);
@@ -825,7 +826,7 @@
             }
         }
 
-        // ২. রিকোয়েস্ট বাতিল করার ফাংশন
+        // Cancel a pending join request for a mess
         async function cancelJoinRequest(messId, messName, adminId, btn) {
             const userId = localStorage.getItem('userId');
             if (!confirm("Are you sure you want to cancel?")) return;
