@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multi-User Auth System</title>
+    <!-- Auth0 SDK Script -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; }
         .container { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); padding: 30px; border-radius: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); width: 350px; color: white; text-align: center; }
@@ -13,12 +16,28 @@
         button { width: 100%; padding: 12px; border: none; border-radius: 5px; background: #4facfe; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
         button:hover { background: #00f2fe; }
         .toggle-link { margin-top: 15px; font-size: 0.9em; cursor: pointer; color: #ff9a9e; text-decoration: underline; }
+        
+        /* SSO Section Styles */
+        .divider { margin: 20px 0; font-size: 0.9em; color: #ddd; position: relative; }
+        .divider::before, .divider::after { content: ""; position: absolute; top: 50%; width: 40%; height: 1px; background: #ddd; }
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+        
+        .sso-btn { margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .auth0-btn { background: #eb5424; }
+        .auth0-btn:hover { background: #d03e12; }
+        .miniorange-btn { background: #ff7300; }
+        .miniorange-btn:hover { background: #e66800; }
+        .firefox-btn { background: #ff7139; }
+        .firefox-btn:hover { background: #e05b26; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2 id="title">Login</h2>
+    
+    <!-- Existing Auth Form -->
     <form id="auth-form">
         <input type="text" name="username" placeholder="Username" required>
         <input type="password" name="password" placeholder="Password" required>
@@ -30,13 +49,32 @@
 
         <button type="submit" id="btn-text">Sign In</button>
     </form>
+
+    <!-- New SSO Section -->
+    <div id="sso-section">
+        <div class="divider">OR</div>
+
+        <!-- sso buttion auth0 -->
+        <button type="button" class="sso-btn auth0-btn" onclick="loginWithAuth0()">
+            Sign in with Auth0
+        </button>
+
+        <button type="button" class="sso-btn miniorange-btn" onclick="loginWithMiniOrange()">
+            Sign in with miniOrange
+        </button>
+        <button type="button" class="sso-btn firefox-btn" onclick="loginWithFirefox()">
+            Sign in with Firefox
+        </button>
+    </div>
+
     <div class="toggle-link" onclick="toggleForm()" id="toggle-msg">Don't have an account? Register</div>
 </div>
 
 <script>
     let isLogin = true;
-    const api_base = "http://localhost:8000";
+    const api_base = "http://localhost:8000/api";
 
+    // manual id pass handling : 
     function toggleForm() {
         isLogin = !isLogin;
         document.getElementById('title').innerText = isLogin ? 'Login' : 'Register';
@@ -64,37 +102,119 @@
 
             if (response.ok) {
                 if (isLogin) {
-                    // লগইন সফল হলে টোকেন ও রোল সেভ করা
                     localStorage.setItem('token', result.token);
                     localStorage.setItem('role', result.role);
-                    localStorage.setItem("userId",result.id);
+                    localStorage.setItem("userId", result.id);
                     localStorage.setItem('messId', result.mess_id);
-
                     localStorage.setItem('username', result.username); 
                     localStorage.setItem('profile_pic', result.profile_pic);
 
+                    alert(`Welcome ${result.username}! Role: ${result.role}`);
                     
-                    alert(`Welcome ${data.username}! Role: ${result.role}`);
-                    
-                    // রোল অনুযায়ী রিডাইরেক্ট
                     if (result.role === "admin") {
                         window.location.href = "admin.html";
                     } else {
                         window.location.href = "user.html";
                     }
                 } else {
-                    // রেজিস্ট্রেশন সফল হলে
                     alert("Registration Successful! Now please login.");
                     toggleForm();
                 }
             } else {
-                alert(result.error || "Action failed!");
+                alert(result.error || result.message || "Action failed!");
             }
         } catch (error) {
             console.error("Error:", error);
-            alert("Internal Server Error. Make sure your server is running!");
+            alert("Internal Server Error. Make sure your server (Port 8000) is running!");
         }
     };
+
+    // sso part :: 
+    
+    // --- Auth0 Initialization & Callback Handling ---
+    let auth0Client = null;
+    window.onload = async () => {
+        try {
+            auth0Client = await auth0.createAuth0Client({
+                domain: 'dev-dcc6fqjk6zngaddw.us.auth0.com', 
+                clientId: 'O7He2hRFOm6tdHS0ffbxrkhNn6r3G0sq', 
+                authorizationParams: {
+                    redirect_uri: 'http://127.0.0.1:5500/frontend/login.html'
+                }
+            });
+
+            if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
+                console.log("Processing Auth0 Callback...");
+                await auth0Client.handleRedirectCallback();
+                window.history.replaceState({}, document.title, window.location.pathname); 
+                
+                const user = await auth0Client.getUser();
+                const token = await auth0Client.getTokenSilently();
+                const idTokenClaims = await auth0Client.getIdTokenClaims(); 
+                
+                const allExtractedData = {
+                    userInfo: user,
+                    accessToken: token,
+                    idTokenDetails: idTokenClaims
+                };
+
+                console.log("%c=== All Collected SSO User Data ===", "color: #00f2fe; font-size: 16px; font-weight: bold;");
+                console.log(JSON.stringify(allExtractedData, null, 4));
+
+                const ssoData = {
+                    name: user.name,
+                    email: user.email,
+                    provider_id: user.sub,
+                    sso_provider: 'auth0' 
+                };
+
+                try {
+                    const response = await fetch(`${api_base}/sso-login`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(ssoData)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        /* --- MODIFIED LOGIC FOR UNIFIED DATABASE --- */
+                        // এখন ম্যানুয়াল লগইনের মতোই হুবহু একই রেসপন্স আশা করছি
+                        localStorage.setItem('token', result.token);
+                        localStorage.setItem('role', result.role);
+                        localStorage.setItem("userId", result.id); // result.user_id এর বদলে result.id
+                        localStorage.setItem('messId', result.mess_id || null);
+                        localStorage.setItem('username', result.username);
+                        localStorage.setItem('profile_pic', result.profile_pic || 'https://ui-avatars.com/api/?name=User&background=random');
+                        /* ------------------------------------------- */
+
+                        // alert(`SSO Backend Sync Successful! Welcome, ${result.username}!`);
+                        // window.location.href = result.role === "admin" ? "admin.html" : "user.html";
+                    } else {
+                        alert("Backend sync failed: " + result.message);
+                    }
+                } catch (err) {
+                    console.error("Backend API Error:", err);
+                }
+            }
+        } catch (e) {
+            console.error("Auth0 init error:", e);
+        }
+    };
+
+    // --- SSO Login Handlers ---
+    async function loginWithAuth0() {
+        if (!auth0Client) return alert("Auth0 is not initialized yet!");
+        await auth0Client.loginWithRedirect();
+    }
+
+    function loginWithMiniOrange() {
+        alert("Redirecting to miniOrange...");
+    }
+
+    function loginWithFirefox() {
+        alert("Redirecting to Firefox Accounts...");
+    }
 </script>
 </body>
 </html>
